@@ -10,6 +10,7 @@ Environment="PATH=/var/www/alfurqancollege/venv/bin"
 ExecStart=/var/www/alfurqancollege/venv/bin/gunicorn \
           --workers 2 \
           --timeout 120 \
+          --no-control-socket \
           --max-requests 1000 --max-requests-jitter 100 \
           --bind unix:/var/www/alfurqancollege/alfurqancollege.sock \
           config.wsgi:application

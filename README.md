@@ -67,6 +67,8 @@ is not the student/applicant, it is logged as "on behalf of" (audit log, registr
 
 Copy `.env.example` to `.env`, set `DJANGO_DEBUG=false`, a secret key, gateway keys and e-mail settings,
 then `python manage.py collectstatic`. Set `DATABASE_ENGINE=postgresql` to switch database.
+Server deployment (nginx + gunicorn on a unix socket, systemd unit `alfurqancollege`) lives in `deploy/`;
+redeploy after pushing with `bash /var/www/alfurqancollege/deploy/deploy.sh` (as root).
 Configure gateway webhooks to `https://alfurqancollege.com.ng/payments/webhook/paystack/` (or `/flutterwave/`).
 
 ## Tests

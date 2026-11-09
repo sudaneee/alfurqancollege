@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
-# Pull the latest code and restart. Run as root on the server: bash /var/www/alfurqancollege/deploy/deploy.sh
+# Redeploy on the server: pulls main, installs dependencies, migrates,
+# collects static files and restarts gunicorn. Run as root:
+#   bash /var/www/alfurqancollege/deploy/deploy.sh
 set -euo pipefail
 cd /var/www/alfurqancollege
-sudo -u www-data git pull --ff-only
-sudo -u www-data venv/bin/pip install -q -r requirements.txt
-sudo -u www-data venv/bin/python manage.py migrate --noinput
-sudo -u www-data venv/bin/python manage.py collectstatic --noinput -v 0
-systemctl restart alfurqancollege
-systemctl --no-pager --lines=0 status alfurqancollege
+
+git pull --ff-only origin main
+./venv/bin/pip install --quiet -r requirements.txt
+./venv/bin/python manage.py migrate --noinput
+./venv/bin/python manage.py collectstatic --noinput -v 0
+chown -R www-data:www-data .
+cp deploy/alfurqancollege.service /etc/systemd/system/alfurqancollege.service
+systemctl daemon-reload
+systemctl restart alfurqancollege.service
+
+echo "Deployed $(git rev-parse --short HEAD)."
