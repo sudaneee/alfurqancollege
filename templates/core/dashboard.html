@@ -1,0 +1,134 @@
+{% extends "staff/base.html" %}
+{% load core_tags humanize %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<div class="welcome-banner mb-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h2>Welcome, {{ request.user.first_name|default:request.user.username }}</h2>
+      <p>{% if semester %}{{ semester }}{% else %}No current semester is set{% endif %} · {{ today|date:"l, j F Y" }}</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      {% can 'process_admissions' as ca %}{% if ca %}<a href="{% url 'admissions:staff_create' %}" class="btn btn-white btn-sm"><i class="bi bi-person-plus me-1"></i>New applicant</a>{% endif %}
+      {% can 'manage_students' as cs %}{% if cs %}<a href="{% url 'students:create' %}" class="btn btn-outline-white btn-sm"><i class="bi bi-person-badge me-1"></i>New student</a>{% endif %}
+      {% can 'record_payments' as cp %}{% if cp %}<a href="{% url 'bursary:invoices' %}" class="btn btn-outline-white btn-sm"><i class="bi bi-cash me-1"></i>Record payment</a>{% endif %}
+    </div>
+  </div>
+</div>
+
+{% if needs_content_review %}
+<div class="alert alert-warning d-flex gap-2 align-items-start"><i class="bi bi-exclamation-triangle-fill mt-1"></i>
+  <div><strong>Website content needs confirmation.</strong> Contact details, vision, mission and the welcome message are drafts or empty. Please review them in
+  <a href="{% url 'core:settings' %}">Institutional settings</a> and tick “Content reviewed”.</div></div>
+{% endif %}
+{% if not semester %}
+{% can 'manage_academics' as cma %}{% if cma %}
+<div class="alert alert-info"><i class="bi bi-info-circle me-1"></i>Set the current semester in <a href="{% url 'academics:semester_list' %}">Academic setup → Semesters</a> to enable course registration and result entry.</div>
+{% endif %}{% endif %}
+
+<div class="row g-3 mb-4">
+  {% if student_count is not None %}
+  <div class="col-6 col-xl-3"><a class="panel stat" href="{% url 'students:list' %}"><div class="stat-icon"><i class="bi bi-people"></i></div><div><div class="stat-label">Enrolled students</div><div class="stat-value">{{ student_count|intcomma }}</div><div class="stat-sub">Across all programmes</div></div></a></div>
+  {% endif %}
+  {% if app_stats %}
+  <div class="col-6 col-xl-3"><a class="panel stat" href="{% url 'admissions:staff_list' %}?status=submitted"><div class="stat-icon amber"><i class="bi bi-inbox"></i></div><div><div class="stat-label">Applications to process</div><div class="stat-value">{{ app_stats.pending }}</div><div class="stat-sub">{{ app_stats.total }} submitted · {{ period|default:"no period" }}</div></div></a></div>
+  {% endif %}
+  {% if fin %}
+  <div class="col-6 col-xl-3"><a class="panel stat" href="{% url 'bursary:payments' %}"><div class="stat-icon green"><i class="bi bi-cash-stack"></i></div><div><div class="stat-label">Collected this session</div><div class="stat-value">{{ fin.session|naira }}</div><div class="stat-sub">Today: {{ fin.today|naira }}</div></div></a></div>
+  <div class="col-6 col-xl-3"><a class="panel stat" href="{% url 'bursary:payments' %}?status=pending"><div class="stat-icon red"><i class="bi bi-hourglass-split"></i></div><div><div class="stat-label">Payments to verify</div><div class="stat-value">{{ fin.pending }}</div><div class="stat-sub">Outstanding: {{ fin.outstanding|naira }}</div></div></a></div>
+  {% endif %}
+  {% if reg_stats %}
+  <div class="col-6 col-xl-3"><a class="panel stat" href="{% url 'registration:staff_list' %}?status=submitted"><div class="stat-icon"><i class="bi bi-journal-check"></i></div><div><div class="stat-label">Registrations awaiting approval</div><div class="stat-value">{{ reg_stats.awaiting }}</div><div class="stat-sub">{{ reg_stats.total }} registered this semester</div></div></a></div>
+  {% endif %}
+  {% if result_stats %}
+  <div class="col-6 col-xl-3"><a class="panel stat" href="{% url 'results:staff_list' %}?status=hod_approved"><div class="stat-icon amber"><i class="bi bi-clipboard-check"></i></div><div><div class="stat-label">Results to approve / publish</div><div class="stat-value">{{ result_stats.to_approve|add:result_stats.to_publish }}</div><div class="stat-sub">{{ result_stats.submitted }} with HODs · {{ result_stats.published }} published</div></div></a></div>
+  {% endif %}
+  {% if hod_departments %}
+  <div class="col-6 col-xl-3"><div class="panel stat"><div class="stat-icon green"><i class="bi bi-building"></i></div><div><div class="stat-label">My department{{ hod_departments|length|pluralize }}</div><div class="stat-value">{{ hod_students }}</div><div class="stat-sub">students · {{ hod_lecturers }} lecturer{{ hod_lecturers|pluralize }} this semester</div></div></div></div>
+  {% endif %}
+</div>
+
+<div class="row g-3">
+  {% if my_courses is not None %}
+  <div class="col-xl-7">
+    <div class="panel h-100">
+      <div class="panel-header"><h2 class="panel-title">My courses this semester</h2><a href="{% url 'results:my_courses' %}" class="small">View all</a></div>
+      {% if my_courses %}
+      <div class="table-wrap"><table class="table table-hover table-stack">
+        <thead><tr><th>Course</th><th class="num">Students</th><th>Result</th><th></th></tr></thead>
+        <tbody>{% for c in my_courses %}
+        <tr><td data-label="Course"><div class="cell-title">{{ c.alloc.course.code }}</div><div class="cell-sub">{{ c.alloc.course.title }} · {{ c.alloc.course.programme.code }}</div></td>
+          <td data-label="Students" class="num">{{ c.students }}</td>
+          <td data-label="Result">{% if c.sheet %}{% status_badge c.sheet.status c.sheet.get_status_display %}{% else %}{% status_badge 'draft' 'Not started' %}{% endif %}</td>
+          <td class="text-end"><a class="btn btn-light btn-sm" href="{% url 'results:open_sheet' c.alloc.course_id c.alloc.semester_id %}">Open</a></td></tr>
+        {% endfor %}</tbody></table></div>
+      {% else %}{% include "components/empty.html" with icon="bi-easel" title="No courses allocated" text="Courses assigned to you for the current semester will appear here." %}{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if hod_awaiting is not None %}
+  <div class="col-xl-5">
+    <div class="panel h-100">
+      <div class="panel-header"><h2 class="panel-title">Results awaiting your review</h2></div>
+      {% if hod_awaiting %}<ul class="list-unstyled mb-0">{% for s in hod_awaiting %}
+        <li class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center"><div><div class="cell-title">{{ s.course.code }}</div><div class="cell-sub">{{ s.semester }}</div></div><a class="btn btn-primary btn-sm" href="{% url 'results:sheet' s.pk %}">Review</a></li>
+      {% endfor %}</ul>
+      {% else %}{% include "components/empty.html" with icon="bi-check2-all" title="All caught up" text="No results are waiting for HOD review." %}{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if recent_applications is not None %}
+  <div class="col-xl-6">
+    <div class="panel h-100">
+      <div class="panel-header"><h2 class="panel-title">Recent applications</h2><a href="{% url 'admissions:staff_list' %}" class="small">All applications</a></div>
+      {% if recent_applications %}
+      <div class="table-wrap"><table class="table table-hover table-stack"><tbody>
+      {% for a in recent_applications %}
+        <tr><td data-label="Applicant"><a class="cell-title" href="{% url 'admissions:staff_detail' a.pk %}">{{ a.display_name }}</a><div class="cell-sub">{{ a.application_number }}</div></td>
+          <td data-label="Programme" class="small">{{ a.first_choice.code }}</td>
+          <td data-label="Status">{% status_badge a.status a.get_status_display %}</td></tr>
+      {% endfor %}</tbody></table></div>
+      {% else %}{% include "components/empty.html" with icon="bi-person-plus" title="No applications yet" %}{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if students_by_programme %}
+  <div class="col-xl-6">
+    <div class="panel h-100">
+      <div class="panel-header"><h2 class="panel-title">Students by programme</h2></div>
+      <div class="panel-body"><div class="chart-bars">
+        {% for r in students_by_programme %}<div class="cb-row"><span class="cb-label">{{ r.programme__name }}</span><div class="bar"><span style="width:{{ r.pct }}%"></span></div><span class="cb-value">{{ r.n }}</span></div>{% endfor %}
+      </div></div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if recent_payments is not None %}
+  <div class="col-xl-6">
+    <div class="panel h-100">
+      <div class="panel-header"><h2 class="panel-title">Latest payments</h2><a href="{% url 'bursary:payments' %}" class="small">All payments</a></div>
+      {% if recent_payments %}<div class="table-wrap"><table class="table table-stack"><tbody>
+        {% for p in recent_payments %}<tr><td data-label="Payer"><div class="cell-title">{{ p.invoice.payer_name }}</div><div class="cell-sub">{{ p.reference }}</div></td><td data-label="Method" class="small">{{ p.get_method_display }}</td><td data-label="Amount" class="num fw-semibold">{{ p.amount|naira }}</td></tr>{% endfor %}
+      </tbody></table></div>
+      {% else %}{% include "components/empty.html" with icon="bi-cash-coin" title="No payments yet" %}{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if recent_activity is not None %}
+  <div class="col-xl-6">
+    <div class="panel h-100">
+      <div class="panel-header"><h2 class="panel-title">Recent activity</h2><a href="{% url 'core:audit_log' %}" class="small">Audit log</a></div>
+      <div class="panel-body">
+      {% if recent_activity %}<ul class="timeline">{% for e in recent_activity %}
+        <li><div><strong>{{ e.actor|default:"System" }}</strong> {{ e.action|nice }} <span class="text-muted">{{ e.object_repr|truncatechars:60 }}</span>{% if e.via_staff %} <span class="tag">on behalf</span>{% endif %}</div><div class="t-time">{{ e.timestamp|naturaltime }}</div></li>
+      {% endfor %}</ul>{% else %}<p class="text-muted mb-0">No activity recorded yet.</p>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}Academic setup{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Academic setup</h1><p class="sub">{% if semester %}Current: <strong>{{ semester }}</strong>{% else %}No current semester set{% endif %}. Structures are configured per programme — nothing is hard-coded.</p></div>
+  <div class="page-actions"><a class="btn btn-primary" href="{% url 'academics:allocations' %}"><i class="bi bi-person-video3 me-1"></i>Course allocation</a></div>
+</div>
+{% can 'manage_academics' as cma %}
+{% if cma %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4 col-xl-2"><a class="action-tile" href="{% url 'academics:session_list' %}"><i class="bi bi-calendar3"></i><strong>Sessions</strong><span>{{ counts.sessions }} configured</span></a></div>
+  <div class="col-6 col-md-4 col-xl-2"><a class="action-tile" href="{% url 'academics:semester_list' %}"><i class="bi bi-calendar-week"></i><strong>Semesters</strong><span>Dates &amp; deadlines</span></a></div>
+  <div class="col-6 col-md-4 col-xl-2"><a class="action-tile" href="{% url 'academics:department_list' %}"><i class="bi bi-building"></i><strong>Departments</strong><span>{{ counts.departments }} departments</span></a></div>
+  <div class="col-6 col-md-4 col-xl-2"><a class="action-tile" href="{% url 'academics:programme_list' %}"><i class="bi bi-mortarboard"></i><strong>Programmes</strong><span>Duration, weighting</span></a></div>
+  <div class="col-6 col-md-4 col-xl-2"><a class="action-tile" href="{% url 'academics:course_list' %}"><i class="bi bi-book"></i><strong>Courses</strong><span>{{ counts.courses }} courses</span></a></div>
+  <div class="col-6 col-md-4 col-xl-2"><a class="action-tile" href="{% url 'academics:practical_list' %}"><i class="bi bi-hospital"></i><strong>Practicals</strong><span>SIWES, SCE, SCBE</span></a></div>
+  <div class="col-6 col-md-4 col-xl-2"><a class="action-tile" href="{% url 'academics:calendar_list' %}"><i class="bi bi-calendar-event"></i><strong>Calendar</strong><span>Academic calendar</span></a></div>
+  <div class="col-6 col-md-4 col-xl-2"><a class="action-tile" href="{% url 'academics:document_list' %}"><i class="bi bi-file-earmark-pdf"></i><strong>Documents</strong><span>For student download</span></a></div>
+  <div class="col-6 col-md-4 col-xl-2"><a class="action-tile" href="{% url 'results:scheme_list' %}"><i class="bi bi-123"></i><strong>Grading</strong><span>Bands &amp; classes</span></a></div>
+</div>
+{% endif %}
+<div class="panel">
+  <div class="panel-header"><h2 class="panel-title">Programmes</h2></div>
+  <div class="table-wrap"><table class="table table-hover table-stack">
+    <thead><tr><th>Programme</th><th>Department</th><th class="num">Years</th><th class="num">Courses</th><th class="num">Curriculum units</th><th>CA / Exam</th><th>Grading</th><th></th></tr></thead>
+    <tbody>{% for p in programmes %}
+      <tr><td data-label="Programme"><div class="cell-title">{{ p.name }}</div><div class="cell-sub">{{ p.award_title }}</div></td>
+        <td data-label="Department" class="small">{{ p.department }}</td>
+        <td data-label="Years" class="num">{{ p.duration_years }}</td>
+        <td data-label="Courses" class="num">{{ p.n_courses }}</td>
+        <td data-label="Units" class="num">{{ p.units|default:0 }}</td>
+        <td data-label="CA / Exam">{{ p.assessment_split }}</td>
+        <td data-label="Grading" class="small">{{ p.grading_scheme }}</td>
+        <td class="text-end"><a class="btn btn-light btn-sm" href="{% url 'academics:curriculum' p.pk %}">Curriculum</a></td></tr>
+    {% empty %}<tr><td colspan="8">{% include "components/empty.html" with title="No programmes yet" %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+{% endblock %}

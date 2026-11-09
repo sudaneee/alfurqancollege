@@ -1,0 +1,31 @@
+{% extends base_template %}
+{% load core_tags %}
+{% block page_title %}Make a payment{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Make a payment</h1><p class="sub">{{ inv.description }} · {{ inv.number }}</p></div></div>
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Invoice</h2>{% status_badge inv.status inv.get_status_display %}</div>
+      <div class="table-wrap"><table class="table table-compact"><tbody>
+        {% for l in inv.lines.all %}<tr><td>{{ l.description }}</td><td class="num">{{ l.amount|naira }}</td></tr>{% endfor %}
+        {% for a in inv.adjustments.all %}<tr class="text-success"><td>{{ a.get_kind_display }}: {{ a.reason }}</td><td class="num">−{{ a.amount|naira }}</td></tr>{% endfor %}
+        <tr><td class="fw-semibold">Total</td><td class="num fw-semibold">{{ inv.net_amount|naira }}</td></tr>
+        <tr><td>Paid so far</td><td class="num">{{ inv.amount_paid|naira }}</td></tr>
+        <tr><td class="fw-bold">Balance</td><td class="num fw-bold fs-5">{{ inv.balance|naira }}</td></tr>
+      </tbody></table></div></div>
+  </div>
+  <div class="col-lg-5">
+    <div class="panel"><div class="panel-header"><h2 class="panel-title">Pay online</h2></div>
+      {% if inv.balance > 0 %}
+      <form method="post" class="panel-body">{% csrf_token %}
+        {% include "components/form_fields.html" with cols="col-12" %}
+        <p class="small text-muted mt-2 mb-3">{% if inv.allow_instalments %}You may pay in instalments. Minimum now: <strong>{{ minimum|naira }}</strong>.{% else %}This invoice must be paid in full.{% endif %}</p>
+        <button class="btn btn-success w-100 btn-lg" {% if not cfg.online_payments_enabled %}disabled{% endif %}><i class="bi bi-lock me-1"></i>Continue to secure payment</button>
+        <p class="small text-muted mt-3 mb-0"><i class="bi bi-shield-check me-1"></i>You will be redirected to {{ gateway.name }}. Your payment is confirmed directly with the payment provider before it is recorded.</p>
+      </form>
+      {% else %}<div class="panel-body"><p class="mb-0 text-success"><i class="bi bi-check-circle me-1"></i>This invoice is fully paid.</p></div>{% endif %}
+    </div>
+    {% if cfg.instructions %}<div class="panel mt-3"><div class="panel-header"><h2 class="panel-title">Other ways to pay</h2></div><div class="panel-body small">{{ cfg.instructions|linebreaksbr }}</div></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

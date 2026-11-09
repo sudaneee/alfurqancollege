@@ -1,0 +1,28 @@
+{% extends "staff/base.html" %}
+{% block page_title %}Institutional settings{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'core:system' %}">System settings</a> / Institution</div><h1>Institutional settings</h1><p class="sub">These values appear across the website, portals, letters and receipts.</p></div></div>
+<form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+  {% for title, icon, fields in form.sections %}
+  <div class="panel mb-3">
+    <div class="panel-header"><h2 class="panel-title"><i class="bi {{ icon }} me-2 text-primary"></i>{{ title }}</h2></div>
+    <div class="panel-body"><div class="row g-3">
+      {% for field in fields %}
+      <div class="{% if field.field.wide %}col-12{% else %}col-md-6{% endif %}">
+        {% if field.field.widget.input_type == 'checkbox' %}
+          <div class="form-check form-switch mt-md-4">{{ field }}<label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}</div>
+        {% else %}
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}
+          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        {% endif %}
+        {% for e in field.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+      </div>
+      {% endfor %}
+    </div></div>
+  </div>
+  {% endfor %}
+  <button class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Save settings</button>
+</form>
+{% endblock %}

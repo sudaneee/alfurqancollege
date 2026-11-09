@@ -1,0 +1,40 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}Results{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Results</h1><p class="sub">Course result sheets you can see: submitted, under review, approved and published.</p></div>
+  <div class="page-actions">
+    {% can 'generate_transcripts' 'approve_results' 'review_results' 'manage_all_results' as gb %}{% if gb %}<a class="btn btn-light" href="{% url 'results:broadsheet' %}"><i class="bi bi-table me-1"></i>Semester result sheet</a>{% endif %}
+    {% can 'manage_grading' as mg %}{% if mg %}<a class="btn btn-light" href="{% url 'results:scheme_list' %}"><i class="bi bi-123 me-1"></i>Grading systems</a>{% endif %}
+  </div>
+</div>
+<div class="tabs-line">
+  <a href="?semester={{ semester.pk }}" class="{% if not request.GET.status %}active{% endif %}">All</a>
+  {% for code, label in statuses %}<a href="?semester={{ semester.pk }}&status={{ code }}" class="{% if request.GET.status == code %}active{% endif %}">{{ label }}</a>{% endfor %}
+</div>
+<div class="panel">
+  <div class="panel-header"><form class="filters" method="get">
+    {% if request.GET.status %}<input type="hidden" name="status" value="{{ request.GET.status }}">{% endif %}
+    <input type="search" name="q" value="{{ q }}" class="form-control search-input" placeholder="Course code or title…">
+    <select name="semester" class="form-select" onchange="this.form.submit()">{% for s in semesters %}<option value="{{ s.pk }}" {% if s.pk == semester.pk %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+    <select name="programme" class="form-select" onchange="this.form.submit()"><option value="">All programmes</option>{% for p in programmes %}<option value="{{ p.pk }}" {% if request.GET.programme == p.pk|stringformat:'s' %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select>
+    <button class="btn btn-light btn-sm">Filter</button></form></div>
+  {% if page.object_list %}
+  <div class="table-wrap"><table class="table table-hover table-stack">
+    <thead><tr><th>Course</th><th>Programme / level</th><th>Status</th><th>Last update</th><th></th></tr></thead>
+    <tbody>{% for s in page %}<tr>
+      <td data-label="Course"><div class="cell-title">{{ s.course.code }}</div><div class="cell-sub">{{ s.course.title }}</div></td>
+      <td data-label="Programme" class="small">{{ s.course.programme.code }} · {{ s.course.level_label }}</td>
+      <td data-label="Status">{% status_badge s.status s.get_status_display %}</td>
+      <td data-label="Updated" class="small text-muted">{{ s.updated_at|date:"d M Y H:i" }}</td>
+      <td class="text-end"><a class="btn btn-light btn-sm" href="{% url 'results:sheet' s.pk %}">Open</a></td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "components/pagination.html" %}
+  {% else %}{% include "components/empty.html" with icon="bi-clipboard-data" title="No result sheets" text="Result sheets are created when a lecturer opens a course to enter scores." %}{% endif %}
+</div>
+{% if missing %}
+<div class="panel mt-3"><div class="panel-header"><h2 class="panel-title">Courses with registered students but no result sheet yet</h2></div>
+  <div class="panel-body">{% for c in missing %}<a class="tag me-1 mb-1" href="{% url 'results:open_sheet' c.pk semester.pk %}" title="{{ c.title }}">{{ c.programme.code }} {{ c.code }}</a>{% endfor %}</div></div>
+{% endif %}
+{% endblock %}

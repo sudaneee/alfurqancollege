@@ -1,0 +1,23 @@
+{# Renders a form exposing .sections() -> (title, icon, [bound fields]) as panels. #}
+{% if form.non_field_errors %}<div class="alert alert-danger">{% for e in form.non_field_errors %}{{ e }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}
+{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+<div class="panel mb-3"><div class="panel-body">
+{% for title, icon, fields in form.sections %}
+  <div class="form-section">
+    <div class="form-section-title"><i class="bi {{ icon }}"></i>{{ title }}</div>
+    <div class="row g-3">
+    {% for field in fields %}
+      <div class="{% if field.field.wide %}col-12{% else %}col-md-6 col-xl-4{% endif %}">
+        {% if field.field.widget.input_type == 'checkbox' %}
+          <div class="form-check form-switch mt-md-4">{{ field }}<label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label></div>
+        {% else %}
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="req">*</span>{% endif %}</label>{{ field }}
+        {% endif %}
+        {% if field.help_text %}<div class="form-text">{{ field.help_text|safe }}</div>{% endif %}
+        {% for e in field.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+      </div>
+    {% endfor %}
+    </div>
+  </div>
+{% endfor %}
+</div></div>

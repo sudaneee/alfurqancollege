@@ -1,0 +1,23 @@
+{% extends base_template %}
+{% load core_tags %}
+{% block page_title %}Receipt {{ p.receipt_number }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Payment receipt</h1><p class="sub">{{ p.receipt_number }}</p></div>
+  <div class="page-actions"><a class="btn btn-primary" href="?pdf=1" target="_blank"><i class="bi bi-download me-1"></i>Download PDF</a></div></div>
+<div class="panel" style="max-width:720px">
+  <div class="panel-body">
+    <div class="d-flex align-items-center gap-3 mb-4"><img src="{{ site_logo }}" width="56" height="56" class="rounded-circle" alt=""><div><div class="fw-bold display-font">{{ site.college_name }}</div><div class="small text-muted">Official payment receipt</div></div><span class="ms-auto">{% status_badge 'successful' 'Paid' %}</span></div>
+    <dl class="kv">
+      <dt>Receipt number</dt><dd>{{ p.receipt_number }}</dd>
+      <dt>Received from</dt><dd>{{ inv.payer_name }} ({{ inv.payer_reference }})</dd>
+      {% if inv.student %}<dt>Programme</dt><dd>{{ inv.student.programme.name }}</dd>{% endif %}
+      <dt>For</dt><dd>{{ inv.description }} — {{ inv.number }}</dd>
+      <dt>Amount</dt><dd class="fs-5 fw-bold">{{ p.amount|naira }}</dd>
+      <dt>Method</dt><dd>{{ p.get_method_display }}</dd>
+      <dt>Reference</dt><dd>{{ p.reference }}</dd>
+      <dt>Date</dt><dd>{{ p.paid_at|date:"j F Y, H:i" }}</dd>
+      <dt>Balance after payment</dt><dd>{{ inv.balance|naira }}</dd>
+    </dl>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "students/portal/base.html" %}
+{% load core_tags %}
+{% block page_title %}My profile{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>My profile</h1><p class="sub">You can update your contact and next-of-kin details. For changes to your name, date of birth or programme, contact the Registry.</p></div></div>
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="panel"><div class="panel-body text-center">
+      <span class="avatar avatar-lg mx-auto mb-3">{% if s.photo %}<img src="{{ s.photo.url }}" alt="">{% else %}{{ s.first_name|first }}{{ s.last_name|first }}{% endif %}</span>
+      <h2 class="h5 fw-bold mb-1">{{ s.full_name }}</h2><div class="text-muted small mb-3">{{ s.matric_number }}</div>
+      {% status_badge s.status.code s.status.name %}
+    </div>
+    <div class="panel-body border-top"><dl class="kv">
+      <dt>Programme</dt><dd>{{ s.programme.name }}</dd><dt>Department</dt><dd>{{ s.department }}</dd><dt>Level</dt><dd>{{ s.level_label }}</dd>
+      <dt>Admitted</dt><dd>{{ s.entry_session }}</dd><dt>Gender</dt><dd>{{ s.get_gender_display|default:"—" }}</dd><dt>Date of birth</dt><dd>{{ s.date_of_birth|date:"d M Y"|default:"—" }}</dd>
+      <dt>State</dt><dd>{{ s.state_of_origin|default:"—" }}</dd>
+    </dl></div></div>
+  </div>
+  <div class="col-lg-8">
+    <form method="post" class="needs-validation" novalidate>{% csrf_token %}
+      {% include "components/form_sections.html" %}
+      <button class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Save changes</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

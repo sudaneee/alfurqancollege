@@ -1,0 +1,6 @@
+<div class="empty">
+  <div class="empty-icon"><i class="bi {{ icon|default:'bi-inbox' }}"></i></div>
+  <h3>{{ title|default:"Nothing here yet" }}</h3>
+  {% if text %}<p>{{ text }}</p>{% endif %}
+  {% if action_url %}<a href="{{ action_url }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>{{ action_label|default:"Add new" }}</a>{% endif %}
+</div>

@@ -1,0 +1,10 @@
+{% extends "staff/base.html" %}
+{% block page_title %}New applicant{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'admissions:staff_list' %}">Admissions</a> / New applicant</div><h1>Register an applicant</h1>
+  <p class="sub">For applicants applying in person or on a paper form. A portal account is created so they can follow up online later if they wish. Only names and programme are required now — complete the rest at any time.</p></div></div>
+<form method="post" class="needs-validation" novalidate>{% csrf_token %}
+  {% include "components/form_sections.html" %}
+  <div class="d-flex gap-2"><button class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Create applicant</button><a class="btn btn-ghost" href="{% url 'admissions:staff_list' %}">Cancel</a></div>
+</form>
+{% endblock %}

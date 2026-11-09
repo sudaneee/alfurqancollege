@@ -1,0 +1,21 @@
+{% extends "staff/base.html" %}
+{% block page_title %}Semester result sheet{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'results:staff_list' %}">Results</a> / Semester result sheet</div><h1>Semester result sheet</h1><p class="sub">All courses and students for a programme level, with GPA, CGPA and remarks.</p></div>
+  {% if data %}<div class="page-actions"><a class="btn btn-light" href="?{{ request.GET.urlencode }}&export=xlsx"><i class="bi bi-file-earmark-spreadsheet me-1 text-success"></i>Excel</a><a class="btn btn-light" target="_blank" href="?{{ request.GET.urlencode }}&export=pdf"><i class="bi bi-file-earmark-pdf me-1 text-danger"></i>PDF</a></div>{% endif %}</div>
+<div class="panel mb-3"><form method="get" class="panel-body"><div class="row g-3 align-items-end">
+  <div class="col-md-4"><label class="form-label">Programme</label><select name="programme" class="form-select" required><option value="">Choose…</option>{% for p in programmes %}<option value="{{ p.pk }}" {% if p == programme %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select></div>
+  <div class="col-md-2"><label class="form-label">Year</label><input type="number" min="1" max="6" name="year" value="{{ year }}" class="form-control"></div>
+  <div class="col-md-3"><label class="form-label">Semester</label><select name="semester" class="form-select">{% for s in semesters %}<option value="{{ s.pk }}" {% if s == semester %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
+  <div class="col-md-3"><div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="all" value="1" id="all" {% if include_unpublished %}checked{% endif %}><label class="form-check-label small" for="all">Include unpublished (for Academic Board)</label></div><button class="btn btn-primary w-100">Generate</button></div>
+</div></form></div>
+{% if data %}
+<div class="panel"><div class="table-wrap"><table class="table table-compact table-hover">
+  <thead><tr><th>Matric</th><th>Name</th>{% for sh in data.sheets %}<th class="num" title="{{ sh.course.title }}">{{ sh.course.code }}<div class="cell-sub">{{ sh.course.credit_units }}u</div></th>{% endfor %}<th class="num">Units</th><th class="num">GPA</th><th class="num">CGPA</th><th>Remark</th></tr></thead>
+  <tbody>{% for r in data.rows %}<tr><td class="fw-semibold text-nowrap">{{ r.s.matric_number }}</td><td class="text-nowrap">{{ r.s.full_name }}</td>
+    {% for c in r.cells %}<td class="num {% if c and c.total is not None and not c.passed %}text-danger{% endif %}">{% if c and c.total is not None %}{{ c.total|floatformat:0 }}<span class="small ms-1">{{ c.grade }}</span>{% else %}–{% endif %}</td>{% endfor %}
+    <td class="num">{{ r.units }}</td><td class="num fw-semibold">{{ r.gpa|default:"—" }}</td><td class="num">{{ r.cgpa|default:"—" }}</td><td class="small">{{ r.remark }}</td></tr>
+  {% empty %}<tr><td colspan="50">{% include "components/empty.html" with title="No students registered at this level" %}</td></tr>{% endfor %}</tbody>
+</table></div></div>
+{% endif %}
+{% endblock %}

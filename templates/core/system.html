@@ -1,0 +1,20 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}System settings{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>System settings</h1><p class="sub">Configure the institution, users, permissions and platform behaviour — no developer required.</p></div></div>
+{% can 'manage_settings' as s %}{% can 'manage_users' as u %}{% can 'manage_roles' as r %}{% can 'view_audit_log' as a %}{% can 'manage_notifications' as n %}{% can 'manage_fees' as f %}{% can 'manage_grading' as g %}{% can 'manage_admission_settings' as ad %}{% can 'change_student_status' as st %}
+<div class="row g-3">
+  {% if s %}<div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'core:settings' %}"><i class="bi bi-bank"></i><strong>Institutional settings</strong><span>Name, logo, contact details, website text, numbering rules</span></a></div>{% endif %}
+  {% if u %}<div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'accounts:user_list' %}"><i class="bi bi-person-gear"></i><strong>Users</strong><span>Create staff accounts, deactivate, reset passwords, assign roles</span></a></div>{% endif %}
+  {% if r %}<div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'accounts:role_list' %}"><i class="bi bi-shield-lock"></i><strong>Roles &amp; permissions</strong><span>Decide exactly what each role can do</span></a></div>{% endif %}
+  {% if a %}<div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'core:audit_log' %}"><i class="bi bi-clock-history"></i><strong>Audit log</strong><span>Every important change: who, what, when, before and after</span></a></div>{% endif %}
+  {% if n %}<div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'notifications:template_list' %}"><i class="bi bi-chat-square-text"></i><strong>Notification templates</strong><span>Wording and channels for automatic messages</span></a></div>
+  <div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'notifications:broadcast' %}"><i class="bi bi-megaphone"></i><strong>Send a notification</strong><span>Message students, applicants or staff</span></a></div>{% endif %}
+  {% if f %}<div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'bursary:settings' %}"><i class="bi bi-credit-card"></i><strong>Fees &amp; payment gateway</strong><span>Fee categories, amounts, instalments, online payments</span></a></div>{% endif %}
+  {% if g %}<div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'results:scheme_list' %}"><i class="bi bi-123"></i><strong>Grading systems</strong><span>Score bands, grade points, pass marks, classifications</span></a></div>{% endif %}
+  {% if ad %}<div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'admissions:period_list' %}"><i class="bi bi-calendar-range"></i><strong>Application periods</strong><span>Open/close admissions, application fee, programmes</span></a></div>
+  <div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'admissions:doctype_list' %}"><i class="bi bi-file-earmark-text"></i><strong>Document types</strong><span>Documents applicants and students must upload</span></a></div>{% endif %}
+  {% if st %}<div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'students:status_list' %}"><i class="bi bi-toggles"></i><strong>Student statuses</strong><span>Admitted, Active, Suspended, Withdrawn, Graduated…</span></a></div>{% endif %}
+</div>
+{% endblock %}

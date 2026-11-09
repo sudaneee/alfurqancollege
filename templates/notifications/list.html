@@ -1,0 +1,18 @@
+{% extends base_template %}
+{% load humanize %}
+{% block page_title %}Notifications{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Notifications</h1></div>
+  {% if page.object_list %}<form method="post">{% csrf_token %}<button class="btn btn-light"><i class="bi bi-check2-all me-1"></i>Mark all as read</button></form>{% endif %}</div>
+<div class="panel">
+  {% if page.object_list %}
+  <ul class="list-unstyled mb-0">{% for n in page %}
+    <li class="border-bottom"><a href="{% url 'notifications:open' n.pk %}" class="d-flex gap-3 px-3 py-3 text-reset list-link {% if not n.is_read %}bg-light{% endif %}">
+      <span class="stat-icon {% if n.is_read %}{% else %}green{% endif %}" style="width:36px;height:36px;flex-basis:36px"><i class="bi {% if n.is_read %}bi-bell{% else %}bi-bell-fill{% endif %}"></i></span>
+      <div class="flex-grow-1"><div class="{% if not n.is_read %}fw-bold{% else %}fw-semibold{% endif %}">{{ n.title }}</div><div class="small text-muted">{{ n.body|truncatechars:220 }}</div></div>
+      <span class="small text-muted text-nowrap">{{ n.created_at|naturaltime }}</span></a></li>
+  {% endfor %}</ul>
+  {% include "components/pagination.html" %}
+  {% else %}{% include "components/empty.html" with icon="bi-bell" title="No notifications" text="Updates about admissions, payments and results will appear here." %}{% endif %}
+</div>
+{% endblock %}

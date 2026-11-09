@@ -1,0 +1,80 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}{{ app.display_name }}{% endblock %}
+{% block content %}
+{% can 'process_admissions' as pa %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'admissions:staff_list' %}?period={{ app.period_id }}">Admissions</a> / {{ app.period.name }}</div>
+    <h1>{{ app.full_name }}</h1>
+    <p class="sub"><strong>{{ app.application_number|default:"Draft (no number yet)" }}</strong> · {% status_badge app.status app.get_status_display %}{% if app.offer_status %} · Offer {{ app.get_offer_status_display|lower }}{% endif %}{% if app.is_sample %} <span class="tag tag-sample">Sample record</span>{% endif %}</p></div>
+  <div class="page-actions">
+    {% if app.is_converted %}<a class="btn btn-primary" href="{% url 'students:detail' app.student.pk %}"><i class="bi bi-mortarboard me-1"></i>Student record {{ app.student.matric_number }}</a>{% endif %}
+    {% if app.status == 'admitted' %}<a class="btn btn-light" target="_blank" href="{% url 'admissions:staff_letter' app.pk %}"><i class="bi bi-file-earmark-pdf me-1"></i>Admission letter</a>{% endif %}
+  </div>
+</div>
+
+<div class="progress-steps mb-4">{% for st in steps %}<div class="ps {{ st.state }}"><i class="bi {% if st.state == 'done' %}bi-check-circle-fill{% else %}{{ st.icon }}{% endif %}"></i>{{ st.label }}</div>{% endfor %}</div>
+
+<div class="row g-3">
+  <div class="col-xl-8">
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Biodata &amp; programme</h2>{% if pa and not app.is_converted %}<a class="btn btn-light btn-sm" href="{% url 'admissions:staff_edit' app.pk %}"><i class="bi bi-pencil me-1"></i>Edit on behalf</a>{% endif %}</div>
+      <div class="panel-body"><div class="row g-4">
+        <div class="col-md-6"><dl class="kv">
+          <dt>First choice</dt><dd>{{ app.first_choice.name }}</dd><dt>Second choice</dt><dd>{{ app.second_choice.name|default:"—" }}</dd>
+          <dt>Gender</dt><dd>{{ app.get_gender_display|default:"—" }}</dd><dt>Date of birth</dt><dd>{{ app.date_of_birth|date:"d M Y"|default:"—" }}</dd>
+          <dt>State / LGA</dt><dd>{{ app.state_of_origin|default:"—" }}{% if app.lga %} / {{ app.lga }}{% endif %}</dd></dl></div>
+        <div class="col-md-6"><dl class="kv">
+          <dt>Phone</dt><dd>{{ app.phone|default:"—" }}</dd><dt>E-mail</dt><dd>{{ app.email|default:"—" }}</dd><dt>Address</dt><dd>{{ app.address|default:"—" }}</dd>
+          <dt>Next of kin</dt><dd>{{ app.next_of_kin_name|default:"—" }}{% if app.next_of_kin_phone %} · {{ app.next_of_kin_phone }}{% endif %}</dd>
+          <dt>School</dt><dd>{{ app.previous_institution|default:"—" }}</dd></dl></div>
+      </div>{% if app.other_qualifications %}<div class="small mt-3"><strong>Other qualifications:</strong> {{ app.other_qualifications }}</div>{% endif %}</div></div>
+
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">O'Level results <span class="text-muted fw-normal small">({{ app.credit_count }} credit{{ app.credit_count|pluralize }})</span></h2>{% if pa and not app.is_converted %}<a class="btn btn-light btn-sm" href="{% url 'admissions:staff_olevels' app.pk %}"><i class="bi bi-pencil me-1"></i>Enter / edit</a>{% endif %}</div>
+      {% if app.olevels.all %}<div class="table-wrap"><table class="table table-compact"><thead><tr><th>Sitting</th><th>Exam</th><th>Subject</th><th>Grade</th></tr></thead><tbody>
+        {% for o in app.olevels.all %}<tr><td>{{ o.sitting }}</td><td class="small">{{ o.exam_type }} {{ o.exam_year }} {{ o.exam_number }}</td><td>{{ o.subject }}</td><td class="fw-semibold">{{ o.grade }}</td></tr>{% endfor %}
+      </tbody></table></div>{% else %}<div class="panel-body text-muted small">No results entered.</div>{% endif %}</div>
+
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Documents</h2>{% if pa %}<a class="btn btn-light btn-sm" href="{% url 'admissions:staff_documents' app.pk %}"><i class="bi bi-upload me-1"></i>Upload on behalf</a>{% endif %}</div>
+      <div class="panel-body">{% for d in app.documents.all %}<a class="tag me-1 mb-1" href="{{ d.file.url }}" target="_blank"><i class="bi bi-file-earmark me-1"></i>{{ d.document_type }}</a>{% empty %}<span class="text-muted small">No documents uploaded.</span>{% endfor %}</div></div>
+
+    <div class="panel"><div class="panel-header"><h2 class="panel-title">Application history</h2></div><div class="panel-body">
+      <ul class="timeline">{% for e in events %}<li><div>{{ e.action }}{% if e.via_staff %} <span class="tag">by staff</span>{% endif %}{% if e.note %} — <span class="text-muted">{{ e.note }}</span>{% endif %}</div><div class="t-time">{{ e.created_at|date:"d M Y H:i" }} · {{ e.actor|default:"—" }}</div></li>{% empty %}<li>No events.</li>{% endfor %}</ul>
+    </div></div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Application fee</h2></div><div class="panel-body">
+      {% if app.fee_exempt %}<p class="mb-1"><span class="tag tag-green">Exempted</span></p><p class="small text-muted mb-0">{{ app.fee_exemption_reason }} — by {{ app.fee_exempted_by }}</p>
+      {% elif app.period.application_fee == 0 %}<p class="mb-0">Free application form.</p>
+      {% else %}
+        <p class="mb-2">{{ app.period.application_fee|naira }} · {% if app.fee_settled %}{% status_badge 'paid' %}{% else %}{% status_badge 'unpaid' %}{% endif %}</p>
+        {% if invoice %}<a class="btn btn-light btn-sm mb-2" href="{% url 'bursary:invoice_detail' invoice.pk %}">Invoice {{ invoice.number }}</a>{% endif %}
+        {% can 'record_payments' as rp %}{% if rp and not app.fee_settled %}<form method="post" action="{% url 'admissions:staff_invoice' app.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-light btn-sm mb-2">Record payment</button></form>{% endif %}
+        {% can 'grant_fee_exemption' as gfe %}{% if gfe and not app.fee_settled %}
+        <form method="post" action="{% url 'admissions:staff_exempt' app.pk %}" class="mt-2 border-top pt-3" data-confirm="Grant a free application form to this applicant?">{% csrf_token %}
+          {% include "components/form_fields.html" with form=exempt_form cols="col-12" %}<button class="btn btn-success btn-sm mt-2">Grant exemption</button></form>{% endif %}
+      {% endif %}
+    </div></div>
+
+    {% if pa and app.status == 'draft' %}
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Submit on behalf</h2></div>
+      <form method="post" action="{% url 'admissions:staff_submit' app.pk %}" class="panel-body" data-confirm="Submit this application on the applicant's behalf?">{% csrf_token %}
+        {% if missing %}<p class="small text-muted mb-1">Outstanding:</p><ul class="small ps-3 mb-2">{% for m in missing %}<li>{{ m }}</li>{% endfor %}</ul>
+        <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="force" value="1" id="force"><label class="form-check-label small" for="force">Submit anyway (override is recorded)</label></div>{% endif %}
+        <button class="btn btn-primary w-100"><i class="bi bi-send me-1"></i>Submit application</button></form></div>
+    {% endif %}
+
+    {% if pa and app.status != 'draft' and app.status != 'withdrawn' and not app.is_converted %}
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Admission decision</h2></div>
+      <form method="post" action="{% url 'admissions:staff_decide' app.pk %}" class="panel-body" data-confirm="Record this decision? The applicant will be notified.">{% csrf_token %}
+        {% include "components/form_fields.html" with form=decision_form cols="col-12" %}<button class="btn btn-primary w-100 mt-3">Save decision</button></form></div>
+    {% endif %}
+
+    {% if pa and app.status == 'admitted' and app.offer_status == 'pending' %}
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Respond to offer on behalf</h2></div>
+      <form method="post" action="{% url 'admissions:staff_offer' app.pk %}" class="panel-body" data-confirm="Record the applicant's response? Accepting creates the student record.">{% csrf_token %}
+        {% include "components/form_fields.html" with form=offer_form cols="col-12" %}<button class="btn btn-success w-100 mt-3">Record response</button></form></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

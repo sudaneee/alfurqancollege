@@ -1,0 +1,41 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}Users{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'core:system' %}">System settings</a> / Users</div><h1>Users</h1><p class="sub">Staff accounts, plus student and applicant logins for password resets and access control.</p></div>
+  <div class="page-actions"><a class="btn btn-primary" href="{% url 'accounts:user_create' %}"><i class="bi bi-person-plus me-1"></i>New staff account</a></div>
+</div>
+<div class="tabs-line">
+  <a href="?type=staff" class="{% if utype == 'staff' %}active{% endif %}">Staff</a>
+  <a href="?type=student" class="{% if utype == 'student' %}active{% endif %}">Students</a>
+  <a href="?type=applicant" class="{% if utype == 'applicant' %}active{% endif %}">Applicants</a>
+</div>
+<div class="panel">
+  <div class="panel-header">
+    <form class="filters" method="get">
+      <input type="hidden" name="type" value="{{ utype }}">
+      <input type="search" name="q" value="{{ q }}" class="form-control search-input" placeholder="Name, e-mail, staff ID, matric…">
+      {% if utype == 'staff' %}<select name="role" class="form-select" onchange="this.form.submit()"><option value="">All roles</option>{% for r in roles %}<option value="{{ r.pk }}" {% if role == r.pk|stringformat:'s' %}selected{% endif %}>{{ r.name }}</option>{% endfor %}</select>{% endif %}
+      <select name="status" class="form-select" onchange="this.form.submit()"><option value="">Any status</option><option value="active" {% if status == 'active' %}selected{% endif %}>Active</option><option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Deactivated</option></select>
+      <button class="btn btn-light btn-sm">Search</button>
+    </form>
+    <span class="small text-muted">{{ page.paginator.count }} user{{ page.paginator.count|pluralize }}</span>
+  </div>
+  {% if page.object_list %}
+  <div class="table-wrap"><table class="table table-hover table-stack">
+    <thead><tr><th>Name</th><th>Sign-in</th>{% if utype == 'staff' %}<th>Roles</th><th>Department</th>{% endif %}<th>Status</th><th>Last sign-in</th></tr></thead>
+    <tbody>{% for u in page %}
+    <tr>
+      <td data-label="Name"><div class="d-flex align-items-center gap-2"><span class="avatar">{{ u|initials }}</span><div><a class="cell-title" href="{% url 'accounts:user_detail' u.pk %}">{{ u.get_full_name|default:u.username }}</a>{% if u.is_sample %} <span class="tag tag-sample">Sample</span>{% endif %}<div class="cell-sub">{{ u.email }}</div></div></div></td>
+      <td data-label="Sign-in" class="small">{{ u.staff_profile.staff_id|default:u.student.matric_number|default:u.username }}</td>
+      {% if utype == 'staff' %}<td data-label="Roles" class="small">{% if u.is_superuser %}<span class="tag">Super Administrator</span>{% endif %}{% for g in u.groups.all %}<span class="tag me-1">{{ g.name }}</span>{% empty %}{% if not u.is_superuser %}<span class="text-muted">No role</span>{% endif %}{% endfor %}</td>
+      <td data-label="Department" class="small">{{ u.staff_profile.department|default:"—" }}</td>{% endif %}
+      <td data-label="Status">{% if u.is_active %}{% status_badge 'active' %}{% else %}{% status_badge 'suspended' 'Deactivated' %}{% endif %}</td>
+      <td data-label="Last sign-in" class="small text-muted">{{ u.last_login|date:"d M Y H:i"|default:"Never" }}</td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "components/pagination.html" %}
+  {% else %}{% include "components/empty.html" with icon="bi-people" title="No users found" %}{% endif %}
+</div>
+{% endblock %}

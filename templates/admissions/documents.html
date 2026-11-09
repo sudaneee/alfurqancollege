@@ -1,0 +1,28 @@
+{% extends base_template %}
+{% block page_title %}Documents{% endblock %}
+{% block content %}
+<div class="page-header"><div>
+  {% if staff %}<div class="crumbs"><a href="{% url 'admissions:staff_list' %}">Admissions</a> / <a href="{{ back_url }}">{{ app.application_number|default:"Draft" }}</a></div>{% endif %}
+  <h1>Supporting documents</h1>
+  <p class="sub">Upload clear scans or photos. PDF, JPG or PNG, up to {{ site.max_document_size_mb }} MB each.{% if staff %} Uploading on behalf of <strong>{{ app.display_name }}</strong>.{% endif %}</p>
+</div></div>
+{% if missing %}<div class="alert alert-warning">Still required: {% for d in missing %}<strong>{{ d.name }}</strong>{% if not forloop.last %}, {% endif %}{% endfor %}</div>{% endif %}
+<div class="row g-3">
+  <div class="col-lg-7"><div class="panel">
+    <div class="panel-header"><h2 class="panel-title">Uploaded</h2></div>
+    {% if docs %}<div class="table-wrap"><table class="table table-stack"><tbody>{% for d in docs %}
+      <tr><td data-label="Document"><a class="cell-title" href="{{ d.file.url }}" target="_blank"><i class="bi bi-file-earmark-check text-success me-1"></i>{{ d.document_type }}</a><div class="cell-sub">{{ d.uploaded_at|date:"d M Y H:i" }}{% if d.uploaded_by_id != app.user_id %} · by staff{% endif %}</div></td>
+        <td class="text-end">{% if editable %}<form method="post" data-confirm="Remove this document?">{% csrf_token %}<button class="btn btn-ghost btn-sm text-danger" name="delete" value="{{ d.pk }}"><i class="bi bi-trash"></i></button></form>{% endif %}</td></tr>
+    {% endfor %}</tbody></table></div>
+    {% else %}{% include "components/empty.html" with icon="bi-folder2-open" title="No documents yet" %}{% endif %}
+  </div>
+  {% if not staff %}<div class="mt-3 d-flex gap-2"><a href="{% url 'admissions:portal_dashboard' %}" class="btn btn-primary">Continue <i class="bi bi-arrow-right ms-1"></i></a></div>{% endif %}
+  </div>
+  {% if editable %}<div class="col-lg-5"><div class="panel"><div class="panel-header"><h2 class="panel-title">Upload</h2></div>
+    <form method="post" enctype="multipart/form-data" class="panel-body">{% csrf_token %}
+      {% include "components/form_fields.html" with cols="col-12" %}
+      <div class="form-text">Uploading the same document type again replaces the previous file.</div>
+      <button class="btn btn-primary mt-3 w-100"><i class="bi bi-upload me-1"></i>Upload</button>
+    </form></div></div>{% endif %}
+</div>
+{% endblock %}

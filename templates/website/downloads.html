@@ -1,0 +1,9 @@
+{% extends "website/base.html" %}
+{% block title %}Downloads · {{ site.college_name }}{% endblock %}
+{% block content %}
+{% include "website/page_hero.html" with heading="Downloads" lead="Public documents from the College." %}
+<section class="section"><div class="container" style="max-width:860px"><div class="panel">
+  {% if docs %}<ul class="list-unstyled mb-0">{% for d in docs %}<li class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center gap-3"><div><div class="fw-semibold">{{ d.title }}</div><div class="small text-muted">{{ d.description }}{% if d.programme %} · {{ d.programme }}{% endif %}</div></div><a class="btn btn-light btn-sm" href="{{ d.file.url }}" target="_blank"><i class="bi bi-download me-1"></i>Download</a></li>{% endfor %}</ul>
+  {% else %}{% include "components/empty.html" with icon="bi-download" title="No public downloads yet" %}{% endif %}
+</div></div></section>
+{% endblock %}

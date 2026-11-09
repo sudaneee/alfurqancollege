@@ -1,0 +1,18 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}Contact messages{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'website:cms' %}">Website content</a></div><h1>Contact messages</h1></div>
+  <div class="tabs-line mb-0 border-0"><a href="?open=1" class="{% if request.GET.open %}active{% endif %}">Open</a><a href="?" class="{% if not request.GET.open %}active{% endif %}">All</a></div></div>
+<div class="panel">
+  {% for m in page %}
+  <div class="p-3 border-bottom">
+    <div class="d-flex justify-content-between flex-wrap gap-2"><div><span class="fw-semibold">{{ m.subject }}</span> <span class="text-muted small">— {{ m.name }} · <a href="mailto:{{ m.email }}">{{ m.email }}</a>{% if m.phone %} · {{ m.phone }}{% endif %}</span></div><span class="small text-muted">{{ m.created_at|date:"d M Y H:i" }}</span></div>
+    <p class="mt-2 mb-2 small">{{ m.message|linebreaksbr }}</p>
+    {% if m.is_handled %}<div class="small text-success"><i class="bi bi-check2-circle me-1"></i>Handled by {{ m.handled_by }}{% if m.response_note %}: {{ m.response_note }}{% endif %}</div>
+    {% else %}<form method="post" action="{% url 'website:message_handled' m.pk %}" class="d-flex gap-2">{% csrf_token %}<input class="form-control form-control-sm" name="note" placeholder="Note (e.g. replied by phone)" style="max-width:360px"><button class="btn btn-light btn-sm">Mark handled</button></form>{% endif %}
+  </div>
+  {% empty %}{% include "components/empty.html" with icon="bi-envelope" title="No messages" %}{% endfor %}
+  {% include "components/pagination.html" %}
+</div>
+{% endblock %}

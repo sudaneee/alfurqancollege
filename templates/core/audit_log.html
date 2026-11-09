@@ -1,0 +1,33 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}Audit log{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'core:system' %}">System settings</a> / Audit log</div><h1>Audit log</h1><p class="sub">A permanent record of important actions. Entries marked “on behalf” were performed by staff for a student or applicant.</p></div></div>
+<div class="panel">
+  <div class="panel-header">
+    <form class="filters" method="get">
+      <input type="search" name="q" value="{{ q }}" class="form-control search-input" placeholder="Search action, user, record…">
+      <select name="module" class="form-select" onchange="this.form.submit()"><option value="">All modules</option>{% for m in modules %}{% if m %}<option value="{{ m }}" {% if m == module %}selected{% endif %}>{{ m|title }}</option>{% endif %}{% endfor %}</select>
+      <div class="form-check ms-1"><input class="form-check-input" type="checkbox" name="assisted" value="1" id="assisted" {% if request.GET.assisted %}checked{% endif %} onchange="this.form.submit()"><label class="form-check-label small" for="assisted">Staff-assisted only</label></div>
+      <button class="btn btn-light btn-sm">Filter</button>
+    </form>
+  </div>
+  {% if page.object_list %}
+  <div class="table-wrap"><table class="table table-compact table-stack">
+    <thead><tr><th>When</th><th>Who</th><th>Action</th><th>Record</th><th>Changes</th></tr></thead>
+    <tbody>{% for e in page %}
+      <tr>
+        <td data-label="When" class="text-nowrap small">{{ e.timestamp|date:"d M Y H:i" }}<div class="cell-sub">{{ e.ip_address|default:"" }}</div></td>
+        <td data-label="Who">{{ e.actor|default:"System" }}{% if e.via_staff %}<div><span class="tag">on behalf of {{ e.on_behalf_of }}</span></div>{% endif %}</td>
+        <td data-label="Action"><span class="fw-semibold">{{ e.action }}</span><div class="cell-sub">{{ e.module }}</div></td>
+        <td data-label="Record" class="small">{{ e.object_repr }}{% if e.note %}<div class="cell-sub">“{{ e.note|truncatechars:120 }}”</div>{% endif %}</td>
+        <td data-label="Changes" class="small" style="max-width:380px">
+          {% for k, v in e.changes.items %}{% if k != 'deleted' %}<div><span class="text-muted">{{ k }}:</span> {% if v.0 is not None and v|length == 2 %}<del class="text-muted">{{ v.0|truncatechars:40 }}</del> → <strong>{{ v.1|truncatechars:40 }}</strong>{% else %}{{ v|truncatechars:80 }}{% endif %}</div>{% else %}<div class="text-muted">record deleted (snapshot kept)</div>{% endif %}{% endfor %}
+        </td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% include "components/pagination.html" %}
+  {% else %}{% include "components/empty.html" with icon="bi-clock-history" title="No entries" text="No audit entries match your filters." %}{% endif %}
+</div>
+{% endblock %}

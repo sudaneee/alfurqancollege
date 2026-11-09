@@ -1,0 +1,35 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}Bursary{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Bursary</h1><p class="sub">Collections and outstanding balances for {{ session|default:"all sessions" }}.</p></div>
+  <div class="page-actions">
+    <form method="get"><select name="session" class="form-select" onchange="this.form.submit()">{% for s in sessions %}<option value="{{ s.pk }}" {% if s == session %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></form>
+    {% can 'record_payments' as rp %}{% if rp %}<a class="btn btn-light" href="{% url 'core:bulk_home' 'payments' %}"><i class="bi bi-file-earmark-spreadsheet me-1 text-success"></i>Bulk payments</a>
+    <a class="btn btn-primary" href="{% url 'bursary:generate_invoices' %}"><i class="bi bi-receipt me-1"></i>Generate invoices</a>{% endif %}
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3"><div class="panel stat"><div class="stat-icon"><i class="bi bi-receipt"></i></div><div><div class="stat-label">Billed (net)</div><div class="stat-value">{{ billed|naira }}</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="panel stat"><div class="stat-icon green"><i class="bi bi-cash-stack"></i></div><div><div class="stat-label">Collected</div><div class="stat-value">{{ collected|naira }}</div><div class="stat-sub">{{ rate }}% of billed</div></div></div></div>
+  <div class="col-6 col-xl-3"><a class="panel stat" href="{% url 'bursary:invoices' %}?status=part_paid"><div class="stat-icon red"><i class="bi bi-exclamation-circle"></i></div><div><div class="stat-label">Outstanding</div><div class="stat-value">{{ outstanding|naira }}</div></div></a></div>
+  <div class="col-6 col-xl-3"><a class="panel stat" href="{% url 'bursary:payments' %}?status=pending"><div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div><div><div class="stat-label">Awaiting verification</div><div class="stat-value">{{ pending }}</div></div></a></div>
+</div>
+<div class="row g-3">
+  <div class="col-xl-6"><div class="panel h-100"><div class="panel-header"><h2 class="panel-title">Collections by programme</h2></div><div class="panel-body">
+    {% if by_programme %}<div class="chart-bars">{% for r in by_programme %}<div class="cb-row"><span class="cb-label">{{ r.invoice__student__programme__name }}</span><div class="bar green"><span style="width:{{ r.pct }}%"></span></div><span class="cb-value">{{ r.total|naira }}</span></div>{% endfor %}</div>
+    {% else %}<p class="text-muted mb-0">No collections yet.</p>{% endif %}</div></div></div>
+  <div class="col-xl-6"><div class="panel h-100"><div class="panel-header"><h2 class="panel-title">By payment method</h2></div>
+    <div class="table-wrap"><table class="table table-compact"><tbody>{% for m in by_method %}<tr><td>{{ m.method|nice|title }}</td><td class="num">{{ m.n }} payment{{ m.n|pluralize }}</td><td class="num fw-semibold">{{ m.total|naira }}</td></tr>{% empty %}<tr><td class="text-muted">No payments.</td></tr>{% endfor %}</tbody></table></div>
+    <div class="panel-header border-top"><h2 class="panel-title">Billed by fee category</h2></div>
+    <div class="table-wrap"><table class="table table-compact"><tbody>{% for c in by_category %}{% if c.billed %}<tr><td>{{ c.name }}</td><td class="num fw-semibold">{{ c.billed|naira }}</td></tr>{% endif %}{% endfor %}</tbody></table></div>
+  </div></div>
+  <div class="col-xl-6"><div class="panel"><div class="panel-header"><h2 class="panel-title">Largest outstanding balances</h2><a class="small" href="{% url 'reports:outstanding' %}">Full report</a></div>
+    {% if debtors %}<div class="table-wrap"><table class="table table-stack"><tbody>{% for i in debtors %}<tr><td data-label="Student"><a class="cell-title" href="{% url 'bursary:invoice_detail' i.pk %}">{{ i.student.full_name }}</a><div class="cell-sub">{{ i.student.matric_number }}</div></td><td data-label="Balance" class="num fw-semibold text-danger">{{ i.balance|naira }}</td></tr>{% endfor %}</tbody></table></div>
+    {% else %}{% include "components/empty.html" with icon="bi-emoji-smile" title="No outstanding balances" %}{% endif %}</div></div>
+  <div class="col-xl-6"><div class="panel"><div class="panel-header"><h2 class="panel-title">Latest payments</h2><a class="small" href="{% url 'bursary:payments' %}">All payments</a></div>
+    {% if recent %}<div class="table-wrap"><table class="table table-stack"><tbody>{% for p in recent %}<tr><td data-label="Payer"><div class="cell-title">{{ p.invoice.payer_name }}</div><div class="cell-sub">{{ p.paid_at|date:"d M Y H:i" }} · {{ p.get_method_display }}</div></td><td data-label="Amount" class="num fw-semibold">{{ p.amount|naira }}</td></tr>{% endfor %}</tbody></table></div>
+    {% else %}{% include "components/empty.html" with icon="bi-cash-coin" title="No payments yet" %}{% endif %}</div></div>
+</div>
+{% endblock %}

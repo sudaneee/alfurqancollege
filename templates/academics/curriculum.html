@@ -1,0 +1,53 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}{{ programme.name }} curriculum{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'academics:overview' %}">Academic setup</a> / <a href="{% url 'academics:programme_list' %}">Programmes</a></div>
+    <h1>{{ programme.name }}</h1><p class="sub">{{ programme.award_title }} · {{ programme.curriculum_reference }}</p></div>
+  <div class="page-actions">
+    <a class="btn btn-light" href="?export=xlsx"><i class="bi bi-file-earmark-spreadsheet me-1 text-success"></i>Export</a>
+    {% can 'manage_academics' as cma %}{% if cma %}
+    <a class="btn btn-light" href="{% url 'academics:programme_edit' programme.pk %}"><i class="bi bi-sliders me-1"></i>Programme settings</a>
+    <a class="btn btn-primary" href="{% url 'academics:course_create' %}"><i class="bi bi-plus-lg me-1"></i>Add course</a>{% endif %}
+  </div>
+</div>
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3"><div class="panel stat"><div class="stat-icon"><i class="bi bi-hourglass"></i></div><div><div class="stat-label">Duration</div><div class="stat-value">{{ programme.duration_years }} yrs</div><div class="stat-sub">{{ programme.total_semesters }} semesters</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="panel stat"><div class="stat-icon green"><i class="bi bi-percent"></i></div><div><div class="stat-label">CA / Exam</div><div class="stat-value">{{ programme.assessment_split }}</div><div class="stat-sub">Pass mark {{ programme.grading_scheme.pass_mark|floatformat:0 }}%</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="panel stat"><div class="stat-icon"><i class="bi bi-stack"></i></div><div><div class="stat-label">Curriculum units</div><div class="stat-value">{{ programme.total_curriculum_credits }}</div><div class="stat-sub">Award: {% if programme.min_total_credits %}{{ programme.min_total_credits }}{% if programme.max_total_credits %}–{{ programme.max_total_credits }}{% endif %} units{% else %}not set{% endif %}</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="panel stat"><div class="stat-icon amber"><i class="bi bi-sliders2"></i></div><div><div class="stat-label">Units per semester</div><div class="stat-value">{{ programme.min_credit_units }}–{{ programme.max_credit_units }}</div><div class="stat-sub">Registration limits</div></div></div></div>
+</div>
+<div class="row g-3">
+  <div class="col-xl-8">
+  {% for slot in slots %}
+    <div class="panel mb-3">
+      <div class="panel-header"><h2 class="panel-title">{{ slot.label }}</h2><span class="tag">{{ slot.units }} units</span></div>
+      {% if slot.courses %}
+      <div class="table-wrap"><table class="table table-compact table-stack curriculum-table">
+        <thead><tr><th>Code</th><th>Course title</th><th class="num">L</th><th class="num">T</th><th class="num">P</th><th class="num">Units</th><th>Type</th><th>Prerequisites</th></tr></thead>
+        <tbody>{% for c in slot.courses %}
+          <tr><td data-label="Code" class="fw-semibold text-nowrap"><a href="{% url 'academics:course_edit' c.pk %}">{{ c.code }}</a></td><td data-label="Title">{{ c.title }}{% if not c.is_active %} <span class="tag">inactive</span>{% endif %}</td>
+            <td data-label="L" class="num">{{ c.lecture_hours|default_if_none:"–" }}</td><td data-label="T" class="num">{{ c.tutorial_hours|default_if_none:"–" }}</td><td data-label="P" class="num">{{ c.practical_hours|default_if_none:"–" }}</td>
+            <td data-label="Units" class="num fw-semibold">{{ c.credit_units }}</td><td data-label="Type" class="small">{{ c.get_course_type_display }}</td>
+            <td data-label="Prerequisites" class="small">{% for p in c.prerequisites.all %}{{ p.code }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}<div class="panel-body text-muted small">No courses configured for this semester.</div>{% endif %}
+    </div>
+  {% endfor %}
+  </div>
+  <div class="col-xl-4">
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Practical requirements</h2></div><div class="panel-body">
+      {% for p in practicals %}<div class="mb-3"><div class="fw-semibold">{{ p.title }}</div><div class="small text-muted">{{ p.get_kind_display }}{% if p.timing %} · {{ p.timing }}{% endif %}{% if p.duration %} · {{ p.duration }}{% endif %}</div>{% if p.assessment %}<div class="small mt-1">{{ p.assessment|linebreaksbr }}</div>{% endif %}</div>
+      {% empty %}<p class="text-muted small mb-0">None configured.</p>{% endfor %}
+    </div></div>
+    <div class="panel"><div class="panel-header"><h2 class="panel-title">Grading — {{ programme.grading_scheme.name }}</h2></div>
+      <div class="table-wrap"><table class="table table-compact"><thead><tr><th>Score</th><th>Grade</th><th class="num">Points</th></tr></thead><tbody>
+        {% for b in bands %}<tr><td>{{ b.min_score|floatformat:0 }}–{{ b.max_score|floatformat:0 }}</td><td class="fw-semibold">{{ b.letter }}</td><td class="num">{{ b.points }}</td></tr>{% endfor %}
+      </tbody></table></div>
+      <div class="panel-body border-top small">{% for c in classes %}<div class="d-flex justify-content-between"><span>{{ c.label }}</span><span class="text-muted">{{ c.min_cgpa }}–{{ c.max_cgpa }}</span></div>{% endfor %}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

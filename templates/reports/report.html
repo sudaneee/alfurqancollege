@@ -1,0 +1,33 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}{{ r.title }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'reports:index' %}">Reports</a></div><h1>{{ r.title }}</h1><p class="sub">{{ r.description }}{% if data.subtitle %} · <strong>{{ data.subtitle }}</strong>{% endif %}</p></div>
+  <div class="page-actions">
+    <a class="btn btn-light" href="?{% query_replace export='xlsx' %}"><i class="bi bi-file-earmark-spreadsheet me-1 text-success"></i>Excel</a>
+    <a class="btn btn-light" target="_blank" href="?{% query_replace export='pdf' %}"><i class="bi bi-file-earmark-pdf me-1 text-danger"></i>PDF</a>
+  </div>
+</div>
+{% if r.filters %}
+<div class="panel mb-3"><form method="get" class="panel-body filters">
+  {% if 'period' in r.filters %}<select name="period" class="form-select">{% for p in periods %}<option value="{{ p.pk }}" {% if request.GET.period == p.pk|stringformat:'s' %}selected{% endif %}>{{ p }}</option>{% endfor %}</select>{% endif %}
+  {% if 'session' in r.filters %}<select name="session" class="form-select"><option value="">All sessions</option>{% for s in sessions %}<option value="{{ s.pk }}" {% if request.GET.session == s.pk|stringformat:'s' %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>{% endif %}
+  {% if 'semester' in r.filters %}<select name="semester" class="form-select">{% for s in semesters %}<option value="{{ s.pk }}" {% if request.GET.semester == s.pk|stringformat:'s' %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>{% endif %}
+  {% if 'programme' in r.filters %}<select name="programme" class="form-select"><option value="">All programmes</option>{% for p in programmes %}<option value="{{ p.pk }}" {% if request.GET.programme == p.pk|stringformat:'s' %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select>{% endif %}
+  {% if 'year' in r.filters %}<input type="number" name="year" min="1" max="6" class="form-control" placeholder="Year" value="{{ request.GET.year }}" style="max-width:100px">{% endif %}
+  {% if 'from' in r.filters %}<label class="small text-muted">From</label><input type="date" name="from" class="form-control" value="{{ request.GET.from }}"><label class="small text-muted">to</label><input type="date" name="to" class="form-control" value="{{ request.GET.to }}">{% endif %}
+  <button class="btn btn-primary btn-sm">Apply</button>
+</form></div>
+{% endif %}
+<div class="panel">
+  {% if data.rows %}
+  <div class="table-wrap"><table class="table table-hover table-compact table-stack">
+    <thead><tr>{% for h in data.headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for row in data.rows %}<tr>{% for c in row %}<td data-label="{{ data.headers|slice:forloop.counter|last }}">{% if forloop.counter0 in data.money_cols %}{{ c|naira }}{% else %}{{ c }}{% endif %}</td>{% endfor %}</tr>{% endfor %}</tbody>
+    {% if data.totals %}<tfoot><tr class="fw-bold">{% for c in data.totals %}<td>{% if forloop.counter0 in data.money_cols %}{{ c|naira }}{% else %}{{ c }}{% endif %}</td>{% endfor %}</tr></tfoot>{% endif %}
+  </table></div>
+  {% else %}{% include "components/empty.html" with icon="bi-bar-chart" title="No data" text="There is no data for the selected filters." %}{% endif %}
+</div>
+<p class="small text-muted mt-2">Generated {{ generated|date:"d M Y H:i" }} by {{ request.user.get_full_name }}.</p>
+{% endblock %}

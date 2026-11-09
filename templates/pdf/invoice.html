@@ -1,0 +1,19 @@
+{% extends "pdf/base.html" %}
+{% load core_tags %}
+{% block body %}
+<h1>Invoice</h1>
+<table class="kv" width="100%">
+  <tr><td class="k">Invoice number</td><td><b>{{ inv.number }}</b></td><td class="k">Date</td><td>{{ inv.created_at|date:"j M Y" }}</td></tr>
+  <tr><td class="k">Billed to</td><td>{{ inv.payer_name }}</td><td class="k">Reference</td><td>{{ inv.payer_reference }}</td></tr>
+  <tr><td class="k">Session</td><td>{{ inv.session|default:"" }}</td><td class="k">Status</td><td>{{ inv.get_status_display }}</td></tr>
+</table>
+<table class="grid" style="margin-top:10px"><thead><tr><th>Description</th><th class="num">Amount</th></tr></thead><tbody>
+  {% for l in inv.lines.all %}<tr><td>{{ l.description }}</td><td class="num">{{ l.amount|naira }}</td></tr>{% endfor %}
+  {% for a in inv.adjustments.all %}<tr><td>{{ a.get_kind_display }}: {{ a.reason }}</td><td class="num">-{{ a.amount|naira }}</td></tr>{% endfor %}
+  <tr class="total"><td>Total due</td><td class="num">{{ inv.net_amount|naira }}</td></tr>
+  <tr><td>Paid</td><td class="num">{{ inv.amount_paid|naira }}</td></tr>
+  <tr class="total"><td>Balance</td><td class="num">{{ inv.balance|naira }}</td></tr>
+</tbody></table>
+<p class="muted">{% if inv.allow_instalments %}Instalment payments are accepted{% if inv.min_first_payment %} (first payment at least {{ inv.min_first_payment|naira }}){% endif %}.{% else %}This invoice must be paid in full.{% endif %}{% if inv.due_date %} Due date: {{ inv.due_date|date:"j F Y" }}.{% endif %} Pay online through the portal or at the Bursary.</p>
+{% if inv.is_sample %}<p class="sample">SAMPLE DOCUMENT — demonstration data</p>{% endif %}
+{% endblock %}

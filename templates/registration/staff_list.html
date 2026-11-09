@@ -1,0 +1,49 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}Course registration{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Course registration</h1><p class="sub">{{ semester|default:"No current semester" }} · approve registrations or register courses for students who cannot use the portal.</p></div>
+  <div class="page-actions">
+    {% can 'manage_registrations' as mr %}{% if mr %}<a class="btn btn-light" href="{% url 'core:bulk_home' 'course_registration' %}{% if semester %}?semester={{ semester.pk }}{% endif %}"><i class="bi bi-file-earmark-spreadsheet me-1 text-success"></i>Bulk registration (Excel)</a>{% endif %}
+    <a class="btn btn-light" href="?{% query_replace export='xlsx' %}"><i class="bi bi-download me-1"></i>Export</a>
+  </div>
+</div>
+{% if mr %}
+<div class="panel mb-3"><form class="panel-body d-flex gap-2 flex-wrap align-items-center" method="get" action="{% url 'core:search' %}">
+  <i class="bi bi-person-gear text-primary fs-5"></i><span class="fw-semibold me-2">Register for a student:</span>
+  <input class="form-control" style="max-width:320px" name="q" placeholder="Find student by matric number or name" required>
+  <button class="btn btn-primary btn-sm">Find</button><span class="small text-muted">then choose “Act on behalf → Register courses”.</span>
+</form></div>
+{% endif %}
+<div class="tabs-line">
+  <a href="?semester={{ semester.pk }}" class="{% if not request.GET.status %}active{% endif %}">All</a>
+  {% for code, label in statuses %}<a href="?semester={{ semester.pk }}&status={{ code }}" class="{% if request.GET.status == code %}active{% endif %}">{{ label }} ({{ stats|get_item:code|default:0 }})</a>{% endfor %}
+</div>
+<form method="post" class="panel">{% csrf_token %}
+  <div class="panel-header">
+    <div class="filters">
+      <input form="f" type="search" name="q" value="{{ q }}" class="form-control search-input" placeholder="Matric or name…">
+      <select form="f" name="semester" class="form-select" onchange="document.getElementById('f').submit()">{% for sm in semesters %}<option value="{{ sm.pk }}" {% if sm.pk == semester.pk %}selected{% endif %}>{{ sm }}</option>{% endfor %}</select>
+      <select form="f" name="programme" class="form-select" onchange="document.getElementById('f').submit()"><option value="">All programmes</option>{% for p in programmes %}<option value="{{ p.pk }}" {% if request.GET.programme == p.pk|stringformat:'s' %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select>
+      <button form="f" class="btn btn-light btn-sm">Filter</button>
+    </div>
+    {% can 'approve_registrations' as ar %}{% if ar %}<div class="filters"><input name="note" class="form-control form-control-sm" placeholder="Note (for returns)"><button name="decision" value="approve" class="btn btn-success btn-sm">Approve selected</button><button name="decision" value="return" class="btn btn-light btn-sm" data-confirm="Return the selected registrations for correction?">Return</button></div>{% endif %}
+  </div>
+  {% if page.object_list %}
+  <div class="table-wrap"><table class="table table-hover table-stack">
+    <thead><tr>{% if ar %}<th><input type="checkbox" class="form-check-input" data-check-all="selected" aria-label="Select all"></th>{% endif %}<th>Student</th><th>Programme / level</th><th class="num">Courses</th><th class="num">Units</th><th>Status</th><th></th></tr></thead>
+    <tbody>{% for r in page %}<tr>
+      {% if ar %}<td>{% if r.status == 'submitted' %}<input type="checkbox" class="form-check-input" name="selected" value="{{ r.pk }}" aria-label="Select">{% endif %}</td>{% endif %}
+      <td data-label="Student"><a class="cell-title" href="{% url 'registration:staff_student' r.student_id %}?semester={{ r.semester_id }}">{{ r.student.full_name }}</a><div class="cell-sub">{{ r.student.matric_number }}</div></td>
+      <td data-label="Programme" class="small">{{ r.student.programme.code }} · {{ r.level_label }}</td>
+      <td data-label="Courses" class="num">{{ r.n }}</td><td data-label="Units" class="num">{{ r.units|default:0 }}</td>
+      <td data-label="Status">{% status_badge r.status r.get_status_display %}</td>
+      <td class="text-end">{% if r.status != 'draft' %}<a class="btn btn-ghost btn-sm" target="_blank" href="{% url 'registration:slip' r.pk %}" aria-label="Slip"><i class="bi bi-printer"></i></a>{% endif %}</td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "components/pagination.html" %}
+  {% else %}{% include "components/empty.html" with icon="bi-journal-check" title="No registrations" text="Registrations for the selected semester and filters will appear here." %}{% endif %}
+</form>
+<form id="f" method="get">{% if request.GET.status %}<input type="hidden" name="status" value="{{ request.GET.status }}">{% endif %}</form>
+{% endblock %}

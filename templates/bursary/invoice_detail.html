@@ -1,0 +1,63 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}Invoice {{ inv.number }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'bursary:invoices' %}">Invoices</a></div><h1>{{ inv.number }}</h1>
+    <p class="sub">{{ inv.description }} · {% status_badge inv.status inv.get_status_display %}{% if inv.is_sample %} <span class="tag tag-sample">Sample</span>{% endif %}</p></div>
+  <div class="page-actions">
+    {% if inv.student %}<a class="btn btn-light" href="{% url 'students:detail' inv.student_id %}?tab=finance"><i class="bi bi-person me-1"></i>{{ inv.student.matric_number }}</a>{% elif inv.application %}<a class="btn btn-light" href="{% url 'admissions:staff_detail' inv.application_id %}"><i class="bi bi-person me-1"></i>Applicant</a>{% endif %}
+    <a class="btn btn-light" target="_blank" href="{% url 'bursary:invoice_pdf' inv.pk %}"><i class="bi bi-printer me-1"></i>Print</a>
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-xl-7">
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Charges</h2>
+      {% if inv.student and inv.status != 'cancelled' %}<form method="post">{% csrf_token %}<button class="btn btn-ghost btn-sm" name="action" value="refresh" title="Add newly configured fee items">Refresh from fee schedule</button></form>{% endif %}</div>
+      <div class="table-wrap"><table class="table table-compact"><tbody>
+        {% for l in lines %}<tr><td>{{ l.description }}<div class="cell-sub">{{ l.category|default:"" }}</div></td><td class="num">{{ l.amount|naira }}</td></tr>{% endfor %}
+        {% for a in adjustments %}<tr class="text-success"><td>{{ a.get_kind_display }} — {{ a.reason }}{% if a.sponsor %} ({{ a.sponsor }}){% endif %}<div class="cell-sub">by {{ a.approved_by }} on {{ a.created_at|date:"d M Y" }}</div></td><td class="num">−{{ a.amount|naira }}</td></tr>{% endfor %}
+        <tr><td class="fw-semibold">Net amount</td><td class="num fw-semibold">{{ inv.net_amount|naira }}</td></tr>
+        <tr><td>Paid</td><td class="num">{{ inv.amount_paid|naira }}</td></tr>
+        <tr><td class="fw-bold">Balance</td><td class="num fw-bold fs-5 {% if inv.balance %}text-danger{% else %}text-success{% endif %}">{{ inv.balance|naira }}</td></tr>
+      </tbody></table></div>
+      <div class="panel-footer small text-muted">Instalments: {% if inv.allow_instalments %}allowed{% if inv.min_first_payment %} (first payment at least {{ inv.min_first_payment|naira }}){% endif %}{% else %}not allowed — pay in full{% endif %}{% if inv.due_date %} · Due {{ inv.due_date|date:"j M Y" }}{% endif %}</div>
+    </div>
+
+    <div class="panel"><div class="panel-header"><h2 class="panel-title">Payments</h2></div>
+      {% if payments %}<div class="table-wrap"><table class="table table-stack"><thead><tr><th>Date</th><th>Reference</th><th>Method</th><th class="num">Amount</th><th>Status</th><th></th></tr></thead><tbody>
+      {% for p in payments %}<tr>
+        <td data-label="Date" class="small">{{ p.paid_at|default:p.created_at|date:"d M Y" }}</td>
+        <td data-label="Reference"><div class="small fw-semibold">{{ p.reference }}</div><div class="cell-sub">{% if p.via_staff %}Recorded by {{ p.initiated_by }}{% else %}Self-service{% endif %}{% if p.verified_by %} · verified by {{ p.verified_by }}{% endif %}</div>{% if p.evidence %}<a class="small" href="{{ p.evidence.url }}" target="_blank">Evidence</a>{% endif %}</td>
+        <td data-label="Method" class="small">{{ p.get_method_display }}</td><td data-label="Amount" class="num fw-semibold">{{ p.amount|naira }}</td>
+        <td data-label="Status">{% status_badge p.status p.get_status_display %}{% for r in p.refunds.all %}<div class="cell-sub text-danger">Refunded {{ r.amount|naira }}</div>{% endfor %}</td>
+        <td class="text-end text-nowrap">{% if p.status == 'successful' %}<a class="btn btn-light btn-sm" href="{% url 'bursary:receipt' p.pk %}">Receipt</a>
+          {% can 'manage_refunds' as mrf %}{% if mrf %}<button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#refund{{ p.pk }}">Refund</button>{% endif %}{% endif %}</td></tr>
+        {% if p.status == 'successful' %}<tr class="collapse" id="refund{{ p.pk }}"><td colspan="6"><form method="post" action="{% url 'bursary:refund' p.pk %}" class="d-flex gap-2 flex-wrap" data-confirm="Record this refund?">{% csrf_token %}<input class="form-control form-control-sm" style="max-width:140px" name="amount" type="number" step="0.01" placeholder="Amount" required><input class="form-control form-control-sm" style="max-width:260px" name="reason" placeholder="Reason" required><input class="form-control form-control-sm" style="max-width:160px" name="reference" placeholder="Reference"><button class="btn btn-danger btn-sm">Record refund</button></form></td></tr>{% endif %}
+      {% endfor %}</tbody></table></div>
+      {% else %}{% include "components/empty.html" with icon="bi-cash-coin" title="No payments yet" %}{% endif %}
+    </div>
+  </div>
+  <div class="col-xl-5">
+    {% can 'record_payments' as rp %}
+    {% if rp and inv.balance > 0 and inv.status != 'cancelled' %}
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Record a payment</h2></div>
+      <form method="post" enctype="multipart/form-data" class="panel-body" data-confirm="Record this payment?">{% csrf_token %}<input type="hidden" name="action" value="record_payment">
+        {% include "components/form_fields.html" with form=pay_form cols="col-sm-6" %}
+        <button class="btn btn-primary w-100 mt-3"><i class="bi bi-cash me-1"></i>Record payment</button>
+        <p class="small text-muted mt-2 mb-0">Partial amounts are accepted when the invoice allows instalments. Duplicate references are rejected.</p></form></div>
+    {% endif %}
+    {% can 'manage_adjustments' as ma %}
+    {% if ma and inv.balance > 0 and inv.status != 'cancelled' %}
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Discount, scholarship or exemption</h2></div>
+      <form method="post" class="panel-body" data-confirm="Apply this adjustment? It reduces the amount owed.">{% csrf_token %}<input type="hidden" name="action" value="adjust">
+        {% include "components/form_fields.html" with form=adj_form cols="col-sm-6" %}<button class="btn btn-success w-100 mt-3">Apply</button></form></div>
+    {% endif %}
+    {% can 'manage_fees' as mf %}
+    {% if mf and inv.status != 'cancelled' and not inv.amount_paid %}
+    <div class="panel"><div class="panel-header"><h2 class="panel-title">Cancel invoice</h2></div>
+      <form method="post" class="panel-body" data-confirm="Cancel this invoice?">{% csrf_token %}<input type="hidden" name="action" value="cancel"><input class="form-control mb-2" name="reason" placeholder="Reason" required><button class="btn btn-outline-danger w-100">Cancel invoice</button></form></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends base_template %}
+{% block page_title %}Application details{% endblock %}
+{% block content %}
+<div class="page-header"><div>
+  {% if staff %}<div class="crumbs"><a href="{% url 'admissions:staff_list' %}">Admissions</a> / <a href="{{ back_url }}">{{ app.application_number|default:"Draft" }}</a></div>{% endif %}
+  <h1>Biodata &amp; programme choice</h1>
+  <p class="sub">{% if staff %}Editing on behalf of <strong>{{ app.display_name }}</strong>. Changes are recorded in the application history.{% else %}Step 1 of 4. Fields marked * are required.{% endif %}</p>
+</div></div>
+<form method="post" class="needs-validation" novalidate>{% csrf_token %}
+  {% include "components/form_sections.html" %}
+  <div class="d-flex gap-2"><button class="btn btn-primary">{% if staff %}Save{% else %}Save &amp; continue <i class="bi bi-arrow-right ms-1"></i>{% endif %}</button><a class="btn btn-ghost" href="{{ back_url }}">Cancel</a></div>
+</form>
+{% endblock %}

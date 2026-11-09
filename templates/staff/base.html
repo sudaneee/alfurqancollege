@@ -1,0 +1,48 @@
+{% extends "portal/base.html" %}
+{% load core_tags %}
+{% block portal_name %}Staff Portal{% endblock %}
+{% block home_url %}{% url 'core:dashboard' %}{% endblock %}
+{% block role_label %}{{ request.user.role_names|join:", "|default:"Staff" }}{% endblock %}
+{% block topbar_search %}
+<form class="search position-relative d-none d-md-block" action="{% url 'core:search' %}" method="get" role="search">
+  <i class="bi bi-search"></i>
+  <input class="form-control" type="search" name="q" placeholder="Search students, applicants, invoices…" value="{{ request.GET.q|default:'' }}" aria-label="Search">
+</form>
+{% endblock %}
+{% block nav %}
+{% with p=request.resolver_match.namespace u=request.resolver_match.url_name %}
+<a class="side-link {% if p == 'core' and u == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}"><i class="bi bi-grid-1x2"></i>Dashboard</a>
+
+{% can 'view_applications' 'process_admissions' 'manage_admission_settings' as c_adm %}
+{% can 'view_students' 'manage_students' as c_stu %}
+{% can 'view_registrations' 'manage_registrations' 'approve_registrations' as c_reg %}
+{% if c_adm or c_stu or c_reg %}<div class="nav-group-label">Students</div>{% endif %}
+{% if c_adm %}<a class="side-link {% if p == 'admissions' %}active{% endif %}" href="{% url 'admissions:staff_list' %}"><i class="bi bi-person-plus"></i>Admissions</a>{% endif %}
+{% if c_stu %}<a class="side-link {% if p == 'students' %}active{% endif %}" href="{% url 'students:list' %}"><i class="bi bi-people"></i>Students</a>{% endif %}
+{% if c_reg %}<a class="side-link {% if p == 'registration' %}active{% endif %}" href="{% url 'registration:staff_list' %}"><i class="bi bi-journal-check"></i>Course Registration</a>{% endif %}
+
+{% can 'upload_results' 'review_results' 'approve_results' 'publish_results' 'manage_all_results' 'generate_transcripts' as c_res %}
+{% can 'manage_academics' 'allocate_courses' as c_aca %}
+{% if c_res or c_aca %}<div class="nav-group-label">Academics</div>{% endif %}
+{% can 'upload_results' as c_up %}
+{% if c_up %}<a class="side-link {% if p == 'results' and u == 'my_courses' %}active{% endif %}" href="{% url 'results:my_courses' %}"><i class="bi bi-easel"></i>My Courses</a>{% endif %}
+{% if c_res %}<a class="side-link {% if p == 'results' and u != 'my_courses' %}active{% endif %}" href="{% url 'results:staff_list' %}"><i class="bi bi-clipboard-data"></i>Results</a>{% endif %}
+{% if c_aca %}<a class="side-link {% if p == 'academics' %}active{% endif %}" href="{% url 'academics:overview' %}"><i class="bi bi-diagram-3"></i>Academic Setup</a>{% endif %}
+
+{% can 'view_finance' 'record_payments' 'verify_payments' 'manage_fees' as c_fin %}
+{% if c_fin %}
+<div class="nav-group-label">Finance</div>
+<a class="side-link {% if p == 'bursary' and u == 'overview' %}active{% endif %}" href="{% url 'bursary:overview' %}"><i class="bi bi-wallet2"></i>Bursary</a>
+<a class="side-link {% if p == 'bursary' and u in 'invoices invoice_detail generate_invoices' %}active{% endif %}" href="{% url 'bursary:invoices' %}"><i class="bi bi-receipt"></i>Invoices</a>
+<a class="side-link {% if p == 'bursary' and u in 'payments payment_detail' %}active{% endif %}" href="{% url 'bursary:payments' %}"><i class="bi bi-cash-coin"></i>Payments</a>
+{% endif %}
+
+{% can 'view_reports' as c_rep %}
+{% can 'manage_website' as c_web %}
+{% can 'manage_users' 'manage_roles' 'manage_settings' 'view_audit_log' 'manage_notifications' as c_sys %}
+{% if c_rep or c_web or c_sys %}<div class="nav-group-label">Administration</div>{% endif %}
+{% if c_rep %}<a class="side-link {% if p == 'reports' %}active{% endif %}" href="{% url 'reports:index' %}"><i class="bi bi-bar-chart-line"></i>Reports</a>{% endif %}
+{% if c_web %}<a class="side-link {% if p == 'website' %}active{% endif %}" href="{% url 'website:cms' %}"><i class="bi bi-window-stack"></i>Website Content</a>{% endif %}
+{% if c_sys %}<a class="side-link {% if p == 'accounts' or p == 'core' and u != 'dashboard' or p == 'notifications' and u != 'list' %}active{% endif %}" href="{% url 'core:system' %}"><i class="bi bi-gear"></i>System Settings</a>{% endif %}
+{% endwith %}
+{% endblock %}

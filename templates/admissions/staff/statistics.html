@@ -1,0 +1,14 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}Admission statistics{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'admissions:staff_list' %}">Admissions</a> / Statistics</div><h1>Admission statistics</h1></div>
+  <form method="get" class="filters"><select name="period" class="form-select" onchange="this.form.submit()">{% for p in periods %}<option value="{{ p.pk }}" {% if period_id == p.pk|stringformat:'s' %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select></form></div>
+<div class="row g-3 mb-3">{% for s in by_status %}<div class="col-6 col-md-4 col-xl-2"><div class="panel stat"><div><div class="stat-label">{{ s.status|nice|title }}</div><div class="stat-value">{{ s.n }}</div></div></div></div>{% endfor %}</div>
+<div class="panel"><div class="panel-header"><h2 class="panel-title">By programme (first choice)</h2></div>
+  <div class="table-wrap"><table class="table table-stack"><thead><tr><th>Programme</th><th class="num">Applications</th><th class="num">Admitted</th><th class="num">Accepted</th><th>Admission rate</th></tr></thead><tbody>
+  {% for r in by_prog %}<tr><td data-label="Programme" class="fw-semibold">{{ r.first_choice__name }}</td><td data-label="Applications" class="num">{{ r.total }}</td><td data-label="Admitted" class="num">{{ r.admitted }}</td><td data-label="Accepted" class="num">{{ r.accepted }}</td>
+    <td data-label="Rate" style="min-width:160px">{% widthratio r.admitted r.total 100 as rate %}<div class="d-flex align-items-center gap-2"><div class="bar flex-grow-1 green"><span style="width:{{ rate }}%"></span></div><span class="small fw-semibold">{{ rate }}%</span></div></td></tr>
+  {% empty %}<tr><td colspan="5">{% include "components/empty.html" with title="No submitted applications" %}</td></tr>{% endfor %}
+  </tbody></table></div></div>
+{% endblock %}

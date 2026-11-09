@@ -1,0 +1,38 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}Payments{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Payments</h1><p class="sub">Online payments are verified automatically with the gateway. Offline payments recorded by staff need verification.</p></div>
+  <div class="page-actions"><a class="btn btn-light" href="?{% query_replace export='xlsx' %}"><i class="bi bi-download me-1"></i>Export</a>
+    {% can 'record_payments' as rp %}{% if rp %}<a class="btn btn-light" href="{% url 'core:bulk_home' 'payments' %}"><i class="bi bi-file-earmark-spreadsheet me-1 text-success"></i>Bulk record</a>{% endif %}</div>
+</div>
+<form method="post" class="panel">{% csrf_token %}
+  <div class="panel-header">
+    <div class="filters">
+      <input form="pf" type="search" name="q" value="{{ q }}" class="form-control search-input" placeholder="Reference, receipt, matric…">
+      <select form="pf" name="status" class="form-select" onchange="document.getElementById('pf').submit()"><option value="">Any status</option>{% for c, l in statuses %}<option value="{{ c }}" {% if request.GET.status == c %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+      <select form="pf" name="method" class="form-select" onchange="document.getElementById('pf').submit()"><option value="">Any method</option>{% for c, l in methods %}<option value="{{ c }}" {% if request.GET.method == c %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+      <input form="pf" type="date" name="from" value="{{ request.GET.from }}" class="form-control" aria-label="From"><input form="pf" type="date" name="to" value="{{ request.GET.to }}" class="form-control" aria-label="To">
+      <button form="pf" class="btn btn-light btn-sm">Filter</button>
+    </div>
+    <div class="small text-muted">Successful: <strong>{{ totals.n|default:0 }}</strong> · <strong>{{ totals.t|default:0|naira }}</strong></div>
+  </div>
+  {% can 'verify_payments' as vp %}
+  {% if vp %}<div class="px-3 py-2 border-bottom d-flex gap-2 flex-wrap align-items-center bg-light"><span class="small fw-semibold">Selected pending payments:</span><input name="note" class="form-control form-control-sm" style="max-width:260px" placeholder="Note"><button name="decision" value="approve" class="btn btn-success btn-sm" data-confirm="Verify the selected payments? Receipts will be issued.">Verify</button><button name="decision" value="reject" class="btn btn-outline-danger btn-sm" data-confirm="Reject the selected payments?">Reject</button></div>{% endif %}
+  {% if page.object_list %}
+  <div class="table-wrap"><table class="table table-hover table-stack">
+    <thead><tr>{% if vp %}<th><input type="checkbox" class="form-check-input" data-check-all="selected" aria-label="Select all"></th>{% endif %}<th>Date</th><th>Payer</th><th>Reference</th><th>Method</th><th class="num">Amount</th><th>Status</th></tr></thead>
+    <tbody>{% for p in page %}<tr>
+      {% if vp %}<td>{% if p.status == 'pending' and p.method != 'online' %}<input type="checkbox" class="form-check-input" name="selected" value="{{ p.pk }}" aria-label="Select">{% endif %}</td>{% endif %}
+      <td data-label="Date" class="small text-nowrap">{{ p.paid_at|default:p.created_at|date:"d M Y H:i" }}</td>
+      <td data-label="Payer"><a class="cell-title" href="{% url 'bursary:invoice_detail' p.invoice_id %}">{{ p.invoice.payer_name }}</a><div class="cell-sub">{{ p.invoice.payer_reference }}</div></td>
+      <td data-label="Reference" class="small">{{ p.reference }}{% if p.receipt_number %}<div class="cell-sub">{{ p.receipt_number }}</div>{% endif %}</td>
+      <td data-label="Method" class="small">{{ p.get_method_display }}{% if p.via_staff %}<div class="cell-sub">by {{ p.initiated_by }}</div>{% endif %}</td>
+      <td data-label="Amount" class="num fw-semibold">{{ p.amount|naira }}</td>
+      <td data-label="Status">{% status_badge p.status p.get_status_display %}</td></tr>{% endfor %}</tbody>
+  </table></div>{% include "components/pagination.html" %}
+  {% else %}{% include "components/empty.html" with icon="bi-cash-coin" title="No payments found" %}{% endif %}
+</form>
+<form id="pf" method="get"></form>
+{% endblock %}

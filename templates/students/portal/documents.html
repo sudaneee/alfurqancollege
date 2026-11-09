@@ -1,0 +1,26 @@
+{% extends "students/portal/base.html" %}
+{% load core_tags %}
+{% block page_title %}Documents{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Documents</h1><p class="sub">Upload required documents and download academic materials for your programme.</p></div></div>
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">My uploaded documents</h2></div>
+      {% if documents %}<div class="table-wrap"><table class="table table-stack"><tbody>{% for d in documents %}
+        <tr><td data-label="Document"><a class="cell-title" href="{{ d.file.url }}" target="_blank">{{ d.document_type }}</a><div class="cell-sub">Uploaded {{ d.uploaded_at|date:"d M Y" }}</div></td>
+          <td data-label="Status" class="text-end">{% if d.is_verified %}{% status_badge 'verified' %}{% else %}{% status_badge 'pending' 'Awaiting verification' %}{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+      {% else %}{% include "components/empty.html" with icon="bi-folder2-open" title="No documents yet" text="Use the form to upload your documents." %}{% endif %}
+    </div>
+    <div class="panel"><div class="panel-header"><h2 class="panel-title">Downloads</h2></div>
+      {% if downloads %}<ul class="list-unstyled mb-0">{% for d in downloads %}<li class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center gap-2"><div><div class="fw-semibold">{{ d.title }}</div><div class="cell-sub">{{ d.description }}</div></div><a class="btn btn-light btn-sm" href="{{ d.file.url }}" target="_blank"><i class="bi bi-download"></i></a></li>{% endfor %}</ul>
+      {% else %}{% include "components/empty.html" with icon="bi-download" title="Nothing to download yet" %}{% endif %}
+    </div>
+  </div>
+  <div class="col-lg-5"><div class="panel"><div class="panel-header"><h2 class="panel-title">Upload a document</h2></div>
+    <form method="post" enctype="multipart/form-data" class="panel-body">{% csrf_token %}
+      {% include "components/form_fields.html" with cols="col-12" %}
+      <div class="form-text">PDF, JPG or PNG · maximum {{ site.max_document_size_mb }} MB</div>
+      <button class="btn btn-primary mt-3 w-100"><i class="bi bi-upload me-1"></i>Upload</button>
+    </form></div></div>
+</div>
+{% endblock %}

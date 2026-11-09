@@ -1,0 +1,26 @@
+{% extends "website/base.html" %}
+{% block title %}News & announcements · {{ site.college_name }}{% endblock %}
+{% block content %}
+{% include "website/page_hero.html" with heading="News & announcements" lead="Updates, notices and events from the College." %}
+<section class="section">
+  <div class="container">
+    <div class="tabs-line">
+      <a href="{% url 'website:news' %}" class="{% if not cat %}active{% endif %}">All</a>
+      {% for c, l in categories %}<a href="?category={{ c }}" class="{% if cat == c %}active{% endif %}">{{ l }}</a>{% endfor %}
+    </div>
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="row g-4">
+          {% for n in page %}<div class="col-md-6 reveal"><a class="post-card" href="{{ n.get_absolute_url }}">{% if n.image %}<img src="{{ n.image.url }}" alt="">{% else %}<div class="post-img-fallback"><i class="bi {% if n.category == 'event' %}bi-calendar-event{% elif n.category == 'announcement' %}bi-megaphone{% elif n.category == 'admission' %}bi-mortarboard{% else %}bi-newspaper{% endif %}"></i></div>{% endif %}
+            <div class="pc-body"><span class="tag align-self-start">{{ n.get_category_display }}</span><h3>{% if n.is_pinned %}<i class="bi bi-pin-angle-fill text-danger me-1"></i>{% endif %}{{ n.title }}</h3><p class="small text-muted mb-0">{{ n.summary|default:n.body|striptags|truncatechars:120 }}</p><div class="meta mt-auto">{{ n.published_at|date:"j F Y" }}</div></div></a></div>
+          {% empty %}<div class="col-12"><div class="panel">{% include "components/empty.html" with icon="bi-newspaper" title="Nothing published yet" %}</div></div>{% endfor %}
+        </div>
+        <div class="mt-4">{% include "components/pagination.html" %}</div>
+      </div>
+      <aside class="col-lg-4"><div class="panel p-4"><h2 class="h6 fw-bold mb-3"><i class="bi bi-calendar3 text-primary me-1"></i>Upcoming dates</h2>
+        {% for e in events %}<div class="d-flex gap-3 mb-3"><div class="date-chip"><div class="d">{{ e.start_date|date:"j" }}</div><div class="m">{{ e.start_date|date:"M" }}</div></div><div><div class="fw-semibold small">{{ e.title }}</div><div class="small text-muted">{{ e.get_category_display }}{% if e.end_date %} · until {{ e.end_date|date:"j M" }}{% endif %}</div></div></div>
+        {% empty %}<p class="small text-muted mb-0">No upcoming dates published.</p>{% endfor %}</div></aside>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,8 @@
+{% extends "staff/base.html" %}
+{% block page_title %}Send a notification{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'core:system' %}">System settings</a> / Notifications</div><h1>Send a notification</h1><p class="sub">Delivered in-app immediately. For public announcements also publish a post under Website Content.</p></div>
+  <a class="btn btn-light" href="{% url 'notifications:template_list' %}">Templates</a></div>
+<div class="panel" style="max-width:760px"><form method="post" class="panel-body needs-validation" novalidate>{% csrf_token %}
+  {% include "components/form_fields.html" %}<button class="btn btn-primary mt-3" data-confirm="Send this notification?"><i class="bi bi-send me-1"></i>Send</button></form></div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "students/portal/base.html" %}
+{% block page_title %}Announcements{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Announcements</h1><p class="sub">News and notices from the College.</p></div></div>
+<div class="panel">
+  {% if page.object_list %}<div class="px-3">{% for p in page %}
+    <a class="announcement-item" href="{{ p.get_absolute_url }}" target="_blank"><div class="date-chip"><div class="d">{{ p.published_at|date:"j" }}</div><div class="m">{{ p.published_at|date:"M" }}</div></div>
+      <div><div class="fw-semibold">{% if p.is_pinned %}<i class="bi bi-pin-angle-fill text-danger me-1"></i>{% endif %}{{ p.title }}</div><div class="small text-muted">{{ p.get_category_display }} · {{ p.summary|default:p.body|striptags|truncatechars:160 }}</div></div></a>
+  {% endfor %}</div>{% include "components/pagination.html" %}
+  {% else %}{% include "components/empty.html" with icon="bi-megaphone" title="No announcements" %}{% endif %}
+</div>
+{% endblock %}

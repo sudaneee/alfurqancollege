@@ -1,0 +1,13 @@
+{% extends "pdf/base.html" %}
+{% block body %}
+<h1>Course Result Sheet</h1>
+<table class="kv" width="100%">
+  <tr><td class="k">Course</td><td><b>{{ sheet.course.code }} — {{ sheet.course.title }}</b></td><td class="k">Units</td><td>{{ sheet.course.credit_units }}</td></tr>
+  <tr><td class="k">Programme</td><td>{{ sheet.course.programme.name }} ({{ sheet.course.level_label }})</td><td class="k">Semester</td><td>{{ sheet.semester }}</td></tr>
+  <tr><td class="k">Status</td><td>{{ sheet.get_status_display }}</td><td class="k">CA / Exam</td><td>{{ sheet.ca_max|floatformat:0 }} / {{ sheet.exam_max|floatformat:0 }}</td></tr>
+</table>
+<table class="grid" style="margin-top:8px"><thead><tr><th>#</th><th>Matric number</th><th>Name</th><th class="num">CA</th><th class="num">Exam</th><th class="num">Total</th><th>Grade</th></tr></thead>
+<tbody>{% for s in scores %}<tr><td>{{ forloop.counter }}</td><td>{{ s.student.matric_number }}</td><td>{{ s.student.full_name }}</td><td class="num">{{ s.ca|default_if_none:"" }}</td><td class="num">{{ s.exam|default_if_none:"" }}</td><td class="num">{{ s.total|default_if_none:"" }}</td><td>{{ s.grade }}</td></tr>{% endfor %}</tbody></table>
+<p class="muted">Students: {{ stats.count }} · Passed: {{ stats.passed }} · Average: {{ stats.average|default:"—" }} · Distribution: {% for g, n in stats.dist %}{{ g }}={{ n }} {% endfor %}</p>
+<table width="100%" class="sig"><tr><td>______________________<br>Lecturer</td><td>______________________<br>Head of Department</td><td>______________________<br>Approving officer</td></tr></table>
+{% endblock %}

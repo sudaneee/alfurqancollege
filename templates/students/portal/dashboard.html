@@ -1,0 +1,37 @@
+{% extends "students/portal/base.html" %}
+{% load core_tags humanize %}
+{% block page_title %}Home{% endblock %}
+{% block content %}
+<div class="welcome-banner mb-4">
+  <h2>Hello, {{ s.first_name }}</h2>
+  <p>{{ s.programme.name }} · {{ s.level_label }} · {{ s.matric_number }}</p>
+</div>
+
+{% if missing_docs %}
+<div class="alert alert-warning d-flex gap-2"><i class="bi bi-folder-plus mt-1"></i><div>Please upload: {% for d in missing_docs %}<strong>{{ d.name }}</strong>{% if not forloop.last %}, {% endif %}{% endfor %}. <a href="{% url 'students:portal_documents' %}">Upload now</a></div></div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3"><a class="panel stat" href="{% url 'registration:portal_courses' %}"><div class="stat-icon"><i class="bi bi-journal-check"></i></div><div><div class="stat-label">This semester</div>
+    <div class="stat-value fs-5 mt-1">{% if reg %}{% status_badge reg.status reg.get_status_display %}{% else %}Not registered{% endif %}</div><div class="stat-sub">{% if reg %}{{ reg.total_units }} units{% elif semester %}{{ semester.short }}{% endif %}</div></div></a></div>
+  <div class="col-6 col-xl-3"><a class="panel stat" href="{% url 'results:portal_results' %}"><div class="stat-icon green"><i class="bi bi-graph-up"></i></div><div><div class="stat-label">CGPA</div><div class="stat-value">{{ cgpa|default:"—" }}</div><div class="stat-sub">{{ classification|default:"No published results yet" }}</div></div></a></div>
+  <div class="col-6 col-xl-3"><a class="panel stat" href="{% url 'bursary:portal_fees' %}"><div class="stat-icon {% if fin.balance %}red{% else %}green{% endif %}"><i class="bi bi-wallet2"></i></div><div><div class="stat-label">Outstanding fees</div><div class="stat-value">{{ fin.balance|naira }}</div><div class="stat-sub">Paid {{ fin.paid|naira }}</div></div></a></div>
+  <div class="col-6 col-xl-3"><div class="panel stat"><div class="stat-icon amber"><i class="bi bi-person-badge"></i></div><div><div class="stat-label">Status</div><div class="stat-value fs-5 mt-1">{% status_badge s.status.code s.status.name %}</div><div class="stat-sub">Admitted {{ s.entry_session.name }}</div></div></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><a class="action-tile" href="{% url 'registration:portal_courses' %}"><i class="bi bi-journal-plus"></i><strong>Register courses</strong><span>Select and submit</span></a></div>
+  <div class="col-6 col-md-3"><a class="action-tile" href="{% url 'bursary:portal_fees' %}"><i class="bi bi-credit-card"></i><strong>Pay fees</strong><span>Online or instalments</span></a></div>
+  <div class="col-6 col-md-3"><a class="action-tile" href="{% url 'results:portal_results' %}"><i class="bi bi-clipboard-data"></i><strong>Check results</strong><span>GPA and CGPA</span></a></div>
+  <div class="col-6 col-md-3"><a class="action-tile" href="{% url 'students:portal_documents' %}"><i class="bi bi-download"></i><strong>Documents</strong><span>Upload &amp; download</span></a></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7"><div class="panel h-100"><div class="panel-header"><h2 class="panel-title">Announcements</h2><a class="small" href="{% url 'students:portal_announcements' %}">See all</a></div>
+    {% if posts %}<div class="px-3">{% for p in posts %}<a class="announcement-item" href="{{ p.get_absolute_url }}" target="_blank"><div class="date-chip"><div class="d">{{ p.published_at|date:"j" }}</div><div class="m">{{ p.published_at|date:"M" }}</div></div><div><div class="fw-semibold">{{ p.title }}</div><div class="small text-muted">{{ p.summary|default:p.body|striptags|truncatechars:110 }}</div></div></a>{% endfor %}</div>
+    {% else %}{% include "components/empty.html" with icon="bi-megaphone" title="No announcements" %}{% endif %}</div></div>
+  <div class="col-lg-5"><div class="panel h-100"><div class="panel-header"><h2 class="panel-title">Notifications</h2><a class="small" href="{% url 'notifications:list' %}">See all</a></div>
+    <div class="panel-body">{% if notes %}<ul class="timeline">{% for n in notes %}<li><div class="{% if not n.is_read %}fw-semibold{% endif %}">{{ n.title }}</div><div class="t-time">{{ n.created_at|naturaltime }}</div></li>{% endfor %}</ul>
+    {% else %}<p class="text-muted mb-0">You have no notifications.</p>{% endif %}</div></div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "admissions/portal/base.html" %}
+{% load core_tags %}
+{% block page_title %}My application{% endblock %}
+{% block content %}
+{% if not app %}
+  <div class="welcome-banner mb-4"><h2>Welcome, {{ request.user.first_name }}</h2><p>Apply for admission into {{ site.college_name }}.</p></div>
+  {% if period %}
+  <div class="panel" style="max-width:720px"><div class="panel-header"><h2 class="panel-title">{{ period.name }}</h2><span class="tag tag-green">Open until {{ period.closes_on|date:"j M Y" }}</span></div>
+    <form method="post" class="panel-body">{% csrf_token %}
+      {% if period.instructions %}<p class="text-muted">{{ period.instructions|linebreaksbr }}</p>{% endif %}
+      <p class="mb-3">Application fee: <strong>{% if period.application_fee %}{{ period.application_fee|naira }}{% else %}Free{% endif %}</strong></p>
+      <label class="form-label" for="prog">Which programme are you applying for?</label>
+      <select name="programme" id="prog" class="form-select mb-3">{% for p in programmes %}<option value="{{ p.pk }}">{{ p.name }} — {{ p.award_title }}</option>{% endfor %}</select>
+      <button class="btn btn-primary btn-lg" name="start" value="1"><i class="bi bi-pencil-square me-1"></i>Start my application</button>
+    </form></div>
+  {% else %}
+  <div class="panel">{% include "components/empty.html" with icon="bi-calendar-x" title="Applications are closed" text="There is no open application period at the moment. Please check the website for admission announcements." %}</div>
+  {% endif %}
+{% else %}
+<div class="page-header">
+  <div><h1>My application</h1><p class="sub">{{ app.period.name }}{% if app.application_number %} · <strong>{{ app.application_number }}</strong>{% endif %}</p></div>
+  <div>{% status_badge app.status app.get_status_display %}</div>
+</div>
+
+{% if app.status == 'admitted' %}
+<div class="panel mb-4" style="border-color:#bfe3cf">
+  <div class="panel-body d-flex gap-3 align-items-start flex-wrap">
+    <div class="stat-icon green" style="width:56px;height:56px;font-size:1.6rem"><i class="bi bi-award"></i></div>
+    <div class="flex-grow-1">
+      <h2 class="h4 fw-bold mb-1">Congratulations, you have been offered admission!</h2>
+      <p class="mb-2">Programme: <strong>{{ app.admitted_programme.name }}</strong> ({{ app.admitted_programme.award_title }}) — {{ app.period.session.name }} session.</p>
+      {% if app.decision_note %}<p class="small text-muted">{{ app.decision_note }}</p>{% endif %}
+      {% if app.offer_status == 'pending' %}
+        <form method="post" action="{% url 'admissions:portal_offer' %}" class="d-flex gap-2 flex-wrap mt-3">{% csrf_token %}
+          <button class="btn btn-success" name="response" value="accept" data-confirm="Accept this admission offer? Your student record and matric number will be created."><i class="bi bi-check2-circle me-1"></i>Accept admission</button>
+          <button class="btn btn-outline-danger" name="response" value="decline" data-confirm="Are you sure you want to decline this offer? This cannot be undone online.">Decline</button>
+          <a class="btn btn-light" href="{% url 'admissions:portal_letter' %}" target="_blank"><i class="bi bi-file-earmark-pdf me-1"></i>Admission letter</a>
+        </form>
+      {% elif app.offer_status == 'accepted' %}
+        <div class="d-flex gap-2 flex-wrap mt-2"><a class="btn btn-primary" href="{% url 'students:portal_dashboard' %}"><i class="bi bi-mortarboard me-1"></i>Go to Student Portal</a><a class="btn btn-light" href="{% url 'admissions:portal_letter' %}" target="_blank"><i class="bi bi-file-earmark-pdf me-1"></i>Admission letter</a></div>
+        {% if student %}<p class="small mt-2 mb-0">Your matric number: <strong>{{ student.matric_number }}</strong></p>{% endif %}
+      {% else %}<p class="text-danger mb-0">You declined this offer.</p>{% endif %}
+    </div>
+  </div>
+</div>
+{% elif app.status == 'not_admitted' %}
+<div class="alert alert-danger">We regret that you were not offered admission in this exercise.{% if app.decision_note %} {{ app.decision_note }}{% endif %}</div>
+{% elif app.status == 'submitted' or app.status == 'under_review' %}
+<div class="alert alert-info"><i class="bi bi-hourglass-split me-1"></i>Your application was submitted on {{ app.submitted_at|date:"j F Y" }} and is being reviewed. You will be notified of the decision here{% if app.email %} and by e-mail{% endif %}.</div>
+{% endif %}
+
+<div class="progress-steps mb-4">
+  {% for st in steps %}<div class="ps {{ st.state }}"><i class="bi {% if st.state == 'done' %}bi-check-circle-fill{% else %}{{ st.icon }}{% endif %}"></i>{{ st.label }}</div>{% endfor %}
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="panel"><div class="panel-header"><h2 class="panel-title">Application summary</h2>{% if app.is_editable_by_applicant %}<a href="{% url 'admissions:portal_form' %}" class="btn btn-light btn-sm"><i class="bi bi-pencil me-1"></i>Edit</a>{% endif %}</div>
+      <div class="panel-body"><dl class="kv">
+        <dt>Name</dt><dd>{{ app.full_name }}</dd>
+        <dt>First choice</dt><dd>{{ app.first_choice.name }}</dd>
+        <dt>Second choice</dt><dd>{{ app.second_choice.name|default:"—" }}</dd>
+        <dt>Phone / e-mail</dt><dd>{{ app.phone|default:"—" }} · {{ app.email|default:"—" }}</dd>
+        <dt>O'Level</dt><dd>{{ app.olevels.count }} subjects · {{ app.credit_count }} credit{{ app.credit_count|pluralize }}</dd>
+        <dt>Documents</dt><dd>{{ app.documents.count }} uploaded</dd>
+        <dt>Application fee</dt><dd>{% if app.fee_exempt %}<span class="tag tag-green">Exempted</span>{% elif app.period.application_fee == 0 %}Free{% elif app.fee_settled %}{% status_badge 'paid' %}{% else %}{% status_badge 'unpaid' %} {{ app.period.application_fee|naira }}{% endif %}</dd>
+      </dl></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    {% if app.status == 'draft' %}
+    <div class="panel"><div class="panel-header"><h2 class="panel-title">Next steps</h2></div><div class="panel-body">
+      {% if missing %}<p class="small text-muted mb-2">Complete the following before submitting:</p><ul class="small ps-3">{% for m in missing %}<li>{{ m }}</li>{% endfor %}</ul>{% endif %}
+      {% if not app.fee_settled %}<a href="{% url 'admissions:portal_pay' %}" class="btn btn-success w-100 mb-2"><i class="bi bi-credit-card me-1"></i>Pay application fee</a>{% endif %}
+      <form method="post" action="{% url 'admissions:portal_submit' %}" data-confirm="Submit your application? You will not be able to edit it afterwards.">{% csrf_token %}
+        <button class="btn btn-primary w-100" {% if missing %}disabled{% endif %}><i class="bi bi-send me-1"></i>Submit application</button></form>
+    </div></div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

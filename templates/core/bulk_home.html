@@ -1,0 +1,52 @@
+{% extends "staff/base.html" %}
+{% block page_title %}{{ importer.title }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="crumbs"><a href="{% url importer.back_url_name %}">Back</a> / Bulk operation</div>
+    <h1>{{ importer.title }} {% if context_label %}<span class="text-muted fw-semibold fs-5">{{ context_label }}</span>{% endif %}</h1>
+    <p class="sub">{{ importer.description }}</p>
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="panel">
+      <div class="panel-header"><h2 class="panel-title">Upload</h2></div>
+      <div class="panel-body">
+        <ol class="steps mb-4">
+          <li><div><strong>Download the Excel template</strong><div class="small text-muted">It contains the exact column headings and an Instructions sheet.</div>
+            <a class="btn btn-light btn-sm mt-2" href="{% url 'core:bulk_template' importer.kind %}?{{ request.GET.urlencode }}"><i class="bi bi-file-earmark-spreadsheet me-1 text-success"></i>Download template</a></div></li>
+          <li><div><strong>Fill in the records</strong><div class="small text-muted">One row per record. Do not change the headings.</div></div></li>
+          <li><div><strong>Upload and review the preview</strong><div class="small text-muted">Nothing is saved until you confirm. Errors are shown row by row.</div></div></li>
+        </ol>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <label class="form-label" for="file">Completed Excel file (.xlsx)</label>
+          <input class="form-control" type="file" id="file" name="file" accept=".xlsx" required>
+          {% if needs_reason %}
+          <label class="form-label mt-3" for="reason">Reason for changing a locked result <span class="req">*</span></label>
+          <input class="form-control" id="reason" name="reason" required>
+          {% endif %}
+          <button class="btn btn-primary mt-3"><i class="bi bi-upload me-1"></i>Upload &amp; validate</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="panel">
+      <div class="panel-header"><h2 class="panel-title">Recent uploads</h2></div>
+      {% if batches %}
+      <ul class="list-unstyled mb-0">
+        {% for b in batches %}
+        <li class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center gap-2">
+          <div><a href="{% url 'core:bulk_preview' b.pk %}" class="cell-title">{{ b.file_name }}</a>
+            <div class="cell-sub">{{ b.created_at|date:"d M Y H:i" }} · {{ b.created_by }}</div></div>
+          {% load core_tags %}{% status_badge b.status b.get_status_display %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}{% include "components/empty.html" with icon="bi-clock-history" title="No uploads yet" %}{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

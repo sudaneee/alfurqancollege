@@ -1,0 +1,19 @@
+{% extends "website/base.html" %}
+{% block title %}{{ post.title }} · {{ site.short_name }}{% endblock %}
+{% block meta_description %}{{ post.summary|default:post.body|striptags|truncatechars:150 }}{% endblock %}
+{% block content %}
+{% url 'website:news' as nurl %}
+{% include "website/page_hero.html" with heading=post.title parent_url=nurl parent_label="News" crumb=post.get_category_display %}
+<section class="section">
+  <div class="container"><div class="row g-5">
+    <article class="col-lg-8">
+      <div class="d-flex gap-2 align-items-center mb-3 small text-muted"><span class="tag">{{ post.get_category_display }}</span><span>{{ post.published_at|date:"l, j F Y" }}</span></div>
+      {% if post.event_date %}<div class="alert alert-info"><i class="bi bi-calendar-event me-1"></i><strong>{{ post.event_date|date:"l, j F Y · g:i A" }}</strong>{% if post.event_venue %} — {{ post.event_venue }}{% endif %}</div>{% endif %}
+      {% if post.image %}<img src="{{ post.image.url }}" alt="" class="img-fluid rounded-4 mb-4">{% endif %}
+      <div class="prose">{{ post.body|linebreaks }}</div>
+    </article>
+    <aside class="col-lg-4"><div class="panel p-4"><h2 class="h6 fw-bold">More updates</h2>
+      {% for r in recent %}<a class="announcement-item" href="{{ r.get_absolute_url }}"><div><div class="fw-semibold small">{{ r.title }}</div><div class="small text-muted">{{ r.published_at|date:"j M Y" }}</div></div></a>{% endfor %}</div></aside>
+  </div></div>
+</section>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "pdf/base.html" %}
+{% block body %}
+<table width="100%"><tr><td>Ref: {{ app.application_number }}</td><td class="num">{{ app.decided_at|date:"j F Y" }}</td></tr></table>
+<p style="margin-top:14px">{{ app.full_name }}<br>{{ app.address|default:""|linebreaksbr }}</p>
+<h1>Offer of Provisional Admission</h1>
+<p>Dear {{ app.first_name }},</p>
+<p>We are pleased to inform you that you have been offered <b>provisional admission</b> into the
+<b>{{ app.admitted_programme.award_title }}</b> programme of {{ site.college_name }} for the
+<b>{{ app.period.session.name }}</b> academic session.</p>
+<table class="kv" width="100%">
+  <tr><td class="k">Programme</td><td>{{ app.admitted_programme.name }}</td></tr>
+  <tr><td class="k">Department</td><td>{{ app.admitted_programme.department }}</td></tr>
+  <tr><td class="k">Duration</td><td>{{ app.admitted_programme.duration_years }} years ({{ app.admitted_programme.total_semesters }} semesters)</td></tr>
+  <tr><td class="k">Application number</td><td>{{ app.application_number }}</td></tr>
+  {% if student %}<tr><td class="k">Matriculation number</td><td><b>{{ student.matric_number }}</b></td></tr>{% endif %}
+</table>
+<p>This offer is subject to verification of your credentials. If at any time it is discovered that any information you supplied is false, the admission will be withdrawn.</p>
+<p>To accept this offer, log in to the Application Portal and click <b>Accept admission</b>, or visit the Admissions Office. You will then be required to pay the acceptance and registration fees and complete course registration within the stipulated time.</p>
+<p>Congratulations, and welcome to {{ site.short_name }}.</p>
+<div class="sig"><p>______________________________<br>Registrar / Admissions Officer<br>for: {{ site.head_title }}</p></div>
+{% if app.is_sample %}<p class="sample">SAMPLE DOCUMENT — demonstration data</p>{% endif %}
+{% endblock %}

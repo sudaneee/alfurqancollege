@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+{% block body %}
+<a class="visually-hidden-focusable position-absolute p-2 bg-white" href="#main">Skip to content</a>
+<div class="topbar d-none d-md-block">
+  <div class="container d-flex justify-content-between align-items-center py-2">
+    <div class="d-flex gap-4">
+      {% if site.phone %}<a href="tel:{{ site.phone }}"><i class="bi bi-telephone me-1"></i>{{ site.phone }}</a>{% endif %}
+      {% if site.email %}<a href="mailto:{{ site.email }}"><i class="bi bi-envelope me-1"></i>{{ site.email }}</a>{% endif %}
+      <span><i class="bi bi-award me-1"></i>{{ site.motto }}</span>
+    </div>
+    <div class="d-flex gap-3">
+      <a href="{% url 'accounts:applicant_login' %}">Application Portal</a>
+      <a href="{% url 'accounts:student_login' %}">Student Portal</a>
+      <a href="{% url 'accounts:staff_login' %}">Staff Portal</a>
+    </div>
+  </div>
+</div>
+<nav class="navbar navbar-expand-lg site-nav sticky-top" aria-label="Main">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'website:home' %}">
+      <img class="brand-logo" src="{{ site_logo }}" alt="{{ site.college_name }} logo">
+      <span class="brand-text"><span class="brand-name d-block">{{ site.short_name }}</span><span class="brand-sub d-block">Health Sciences &amp; Technology</span></span>
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Menu"><i class="bi bi-list fs-2"></i></button>
+    <div class="collapse navbar-collapse" id="nav">
+      {% with u=request.resolver_match.url_name %}
+      <ul class="navbar-nav mx-auto gap-lg-1">
+        <li class="nav-item"><a class="nav-link {% if u == 'home' %}active{% endif %}" href="{% url 'website:home' %}">Home</a></li>
+        <li class="nav-item"><a class="nav-link {% if u == 'about' %}active{% endif %}" href="{% url 'website:about' %}">About</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle {% if u == 'programmes' or u == 'programme_detail' %}active{% endif %}" href="{% url 'website:programmes' %}" role="button" data-bs-toggle="dropdown" aria-expanded="false">Programmes</a>
+          <ul class="dropdown-menu">
+            {% for p in nav_programmes %}<li><a class="dropdown-item" href="{% url 'website:programme_detail' p.slug %}">{{ p.name }}</a></li>{% endfor %}
+            <li><hr class="dropdown-divider"></li><li><a class="dropdown-item" href="{% url 'website:programmes' %}">All programmes</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a class="nav-link {% if u == 'admissions' %}active{% endif %}" href="{% url 'website:admissions' %}">Admissions</a></li>
+        <li class="nav-item"><a class="nav-link {% if u == 'news' or u == 'post_detail' %}active{% endif %}" href="{% url 'website:news' %}">News</a></li>
+        <li class="nav-item"><a class="nav-link {% if u == 'contact' %}active{% endif %}" href="{% url 'website:contact' %}">Contact</a></li>
+        <li class="nav-item d-lg-none"><hr><a class="nav-link" href="{% url 'accounts:student_login' %}">Student Portal</a><a class="nav-link" href="{% url 'accounts:staff_login' %}">Staff Portal</a></li>
+      </ul>
+      {% endwith %}
+      <a href="{% url 'admissions:portal_dashboard' %}" class="btn btn-primary"><i class="bi bi-pencil-square me-1"></i>Apply now</a>
+    </div>
+  </div>
+</nav>
+<main id="main">{% block content %}{% endblock %}</main>
+<footer class="site-footer">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="footer-brand d-flex align-items-center gap-3 mb-3"><img src="{{ site_logo }}" alt=""><div><div class="text-white fw-bold display-font">{{ site.college_name }}</div><div class="small">{{ site.motto }}</div></div></div>
+        <p class="small">{{ site.intro|default:site.hero_subtitle|truncatewords:40 }}</p>
+        <div class="social">
+          {% if site.facebook_url %}<a href="{{ site.facebook_url }}" aria-label="Facebook" rel="noopener" target="_blank"><i class="bi bi-facebook"></i></a>{% endif %}
+          {% if site.instagram_url %}<a href="{{ site.instagram_url }}" aria-label="Instagram" rel="noopener" target="_blank"><i class="bi bi-instagram"></i></a>{% endif %}
+          {% if site.x_url %}<a href="{{ site.x_url }}" aria-label="X" rel="noopener" target="_blank"><i class="bi bi-twitter-x"></i></a>{% endif %}
+        </div>
+      </div>
+      <div class="col-6 col-lg-2"><h5>College</h5><ul class="footer-links">
+        <li><a href="{% url 'website:about' %}">About us</a></li><li><a href="{% url 'website:news' %}">News &amp; events</a></li>
+        <li><a href="{% url 'website:downloads' %}">Downloads</a></li><li><a href="{% url 'website:contact' %}">Contact</a></li></ul></div>
+      <div class="col-6 col-lg-3"><h5>Programmes</h5><ul class="footer-links">
+        {% for p in nav_programmes %}<li><a href="{% url 'website:programme_detail' p.slug %}">{{ p.name }}</a></li>{% endfor %}</ul></div>
+      <div class="col-lg-3"><h5>Get in touch</h5><ul class="footer-links">
+        {% if site.address %}<li class="d-flex gap-2"><i class="bi bi-geo-alt"></i><span>{{ site.address|linebreaksbr }}</span></li>{% endif %}
+        {% if site.phone %}<li class="d-flex gap-2"><i class="bi bi-telephone"></i><a href="tel:{{ site.phone }}">{{ site.phone }}</a></li>{% endif %}
+        {% if site.email %}<li class="d-flex gap-2"><i class="bi bi-envelope"></i><a href="mailto:{{ site.email }}">{{ site.email }}</a></li>{% endif %}
+        {% if not site.address and not site.phone and not site.email %}<li><a href="{% url 'website:contact' %}">Send us a message</a></li>{% endif %}
+        <li class="pt-2"><a href="{% url 'admissions:portal_dashboard' %}" class="btn btn-primary btn-sm">Apply for admission</a></li></ul></div>
+    </div>
+    <div class="footer-bottom d-flex flex-wrap justify-content-between gap-2">
+      <span>&copy; {% now "Y" %} {{ site.college_name }}. All rights reserved.</span>
+      <span><a href="{% url 'accounts:applicant_login' %}">Applicants</a> · <a href="{% url 'accounts:student_login' %}">Students</a> · <a href="{% url 'accounts:staff_login' %}">Staff</a></span>
+    </div>
+  </div>
+</footer>
+{% endblock %}

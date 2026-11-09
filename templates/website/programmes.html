@@ -1,0 +1,22 @@
+{% extends "website/base.html" %}
+{% block title %}Programmes · {{ site.college_name }}{% endblock %}
+{% block content %}
+{% include "website/page_hero.html" with heading="Academic programmes" lead="Professionally focused diplomas that prepare you to serve communities, hospitals and health institutions." %}
+<section class="section">
+  <div class="container">
+    <div class="row g-4">
+    {% for p in programmes %}
+      <div class="col-lg-6 reveal">
+        <div class="panel h-100 p-4 d-flex flex-column">
+          <div class="d-flex gap-3 align-items-start mb-3"><div class="pc-icon" style="width:56px;height:56px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--afc-blue),var(--afc-blue-700));color:#fff;font-size:1.5rem;flex:0 0 56px"><i class="bi {{ p.icon }}"></i></div>
+            <div><h2 class="h4 fw-bold mb-1">{{ p.name }}</h2><div class="small text-muted">{{ p.award_title }}</div></div></div>
+          <p class="text-muted">{{ p.summary }}</p>
+          <div class="d-flex flex-wrap gap-2 mb-4"><span class="tag"><i class="bi bi-clock me-1"></i>{{ p.duration_years }} years · {{ p.total_semesters }} semesters</span>{% for pr in p.practical_requirements.all|slice:":2" %}<span class="tag tag-green">{{ pr.get_kind_display|truncatechars:38 }}</span>{% endfor %}<span class="tag">{{ p.department }}</span></div>
+          <div class="mt-auto d-flex gap-2"><a href="{% url 'website:programme_detail' p.slug %}" class="btn btn-primary">Programme details</a><a href="{% url 'admissions:portal_dashboard' %}" class="btn btn-light">Apply</a></div>
+        </div>
+      </div>
+    {% empty %}<div class="col-12"><div class="panel">{% include "components/empty.html" with title="Programmes will be published soon" %}</div></div>{% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}Admissions{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Admissions</h1><p class="sub">Process applications, make decisions and register applicants who cannot apply online.</p></div>
+  <div class="page-actions">
+    <a class="btn btn-light" href="{% url 'admissions:statistics' %}"><i class="bi bi-bar-chart me-1"></i>Statistics</a>
+    {% can 'process_admissions' as pa %}{% if pa %}
+    <div class="dropdown"><button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-file-earmark-spreadsheet me-1 text-success"></i>Bulk</button>
+      <ul class="dropdown-menu dropdown-menu-end shadow">
+        <li><a class="dropdown-item" href="{% url 'core:bulk_home' 'applicants_create' %}{% if period_id %}?period={{ period_id }}{% endif %}"><i class="bi bi-people me-2"></i>Register applicants from Excel</a></li>
+        <li><a class="dropdown-item" href="{% url 'core:bulk_home' 'admission_decisions' %}"><i class="bi bi-check2-square me-2"></i>Bulk admission decisions</a></li>
+        <li><a class="dropdown-item" href="{% url 'core:bulk_home' 'offer_responses' %}"><i class="bi bi-person-check me-2"></i>Accept offers on behalf</a></li>
+      </ul></div>
+    {% endif %}
+    <a class="btn btn-light" href="?{% query_replace export='xlsx' %}"><i class="bi bi-download me-1"></i>Export</a>
+    {% if pa %}<a class="btn btn-primary" href="{% url 'admissions:staff_create' %}"><i class="bi bi-person-plus me-1"></i>New applicant</a>{% endif %}
+  </div>
+</div>
+<div class="tabs-line">
+  <a href="?period={{ period_id }}" class="{% if not request.GET.status %}active{% endif %}">All</a>
+  {% for code, label in statuses %}<a href="?period={{ period_id }}&status={{ code }}" class="{% if request.GET.status == code %}active{% endif %}">{{ label }} <span class="text-muted">({{ stats|get_item:code|default:0 }})</span></a>{% endfor %}
+</div>
+<form method="post" class="panel" id="bulkForm">{% csrf_token %}
+  <div class="panel-header">
+    <div class="filters">
+      <input form="filterForm" type="search" name="q" value="{{ q }}" class="form-control search-input" placeholder="Name, application no., phone…">
+      <select form="filterForm" name="period" class="form-select" onchange="document.getElementById('filterForm').submit()">{% for p in periods %}<option value="{{ p.pk }}" {% if period_id == p.pk|stringformat:'s' %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select>
+      <select form="filterForm" name="programme" class="form-select" onchange="document.getElementById('filterForm').submit()"><option value="">All programmes</option>{% for p in programmes %}<option value="{{ p.pk }}" {% if request.GET.programme == p.pk|stringformat:'s' %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select>
+      <button form="filterForm" class="btn btn-light btn-sm">Search</button>
+    </div>
+    {% if pa %}<div class="filters">
+      <select name="bulk_decision" class="form-select form-select-sm"><option value="admit">Admit selected (first choice)</option><option value="review">Mark selected under review</option><option value="reject">Not admitted</option></select>
+      <button class="btn btn-primary btn-sm" data-confirm="Apply this decision to all selected applications? Applicants will be notified.">Apply</button>
+    </div>{% endif %}
+  </div>
+  {% if page.object_list %}
+  <div class="table-wrap"><table class="table table-hover table-stack">
+    <thead><tr>{% if pa %}<th><input type="checkbox" class="form-check-input" data-check-all="selected" aria-label="Select all"></th>{% endif %}<th>Applicant</th><th>Programme</th><th class="num">Credits</th><th>Fee</th><th>Status</th><th>Submitted</th></tr></thead>
+    <tbody>{% for a in page %}
+      <tr>{% if pa %}<td><input type="checkbox" class="form-check-input" name="selected" value="{{ a.pk }}" aria-label="Select"></td>{% endif %}
+        <td data-label="Applicant"><a class="cell-title" href="{% url 'admissions:staff_detail' a.pk %}">{{ a.full_name }}</a>{% if a.is_sample %} <span class="tag tag-sample">Sample</span>{% endif %}<div class="cell-sub">{{ a.application_number|default:"Draft" }}{% if a.created_by_id and a.created_by_id != a.user_id %} · staff-entered{% endif %}</div></td>
+        <td data-label="Programme" class="small">{{ a.first_choice.name }}{% if a.admitted_programme and a.admitted_programme != a.first_choice %}<div class="cell-sub">Admitted: {{ a.admitted_programme.name }}</div>{% endif %}</td>
+        <td data-label="Credits" class="num">{{ a.credit_count }}</td>
+        <td data-label="Fee">{% if a.fee_exempt %}<span class="tag tag-green">Exempt</span>{% elif a.fee_settled %}{% status_badge 'paid' %}{% else %}{% status_badge 'unpaid' %}{% endif %}</td>
+        <td data-label="Status">{% status_badge a.status a.get_status_display %}{% if a.offer_status %}<div class="cell-sub">Offer: {{ a.get_offer_status_display }}</div>{% endif %}</td>
+        <td data-label="Submitted" class="small text-muted">{{ a.submitted_at|date:"d M Y"|default:"—" }}</td></tr>
+    {% endfor %}</tbody></table></div>
+  {% include "components/pagination.html" %}
+  {% else %}{% include "components/empty.html" with icon="bi-inbox" title="No applications" text="Applications for the selected period and filters will appear here." %}{% endif %}
+</form>
+<form id="filterForm" method="get">{% if request.GET.status %}<input type="hidden" name="status" value="{{ request.GET.status }}">{% endif %}</form>
+{% endblock %}

@@ -1,0 +1,142 @@
+{% extends "website/base.html" %}
+{% load static core_tags %}
+{% block content %}
+<section class="hero" aria-label="Highlights">
+  <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="6500">
+    {% if slides|length > 1 %}<div class="carousel-indicators">{% for s in slides %}<button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" aria-current="true"{% endif %} aria-label="Slide {{ forloop.counter }}"></button>{% endfor %}</div>{% endif %}
+    <div class="carousel-inner">
+      {% for s in slides %}
+      <div class="carousel-item {% if forloop.first %}active{% endif %}">
+        <img src="{% if s.image %}{{ s.image.url }}{% else %}{% static s.static_image|default:'img/campus/graduation-1.jpg' %}{% endif %}" alt="{{ s.title }}">
+        <div class="hero-overlay"></div>
+        <div class="hero-content"><div class="container">
+          <span class="hero-kicker mb-3">{% if period %}<span class="dot"></span>Admissions open · {{ period.name }}{% else %}{{ site.motto }}{% endif %}</span>
+          {% if forloop.first %}<h1 class="mb-3">{{ site.hero_title }}</h1>{% else %}<h2 class="h1 text-white fw-bold mb-3" style="max-width:720px">{{ s.title }}</h2>{% endif %}
+          <p class="lead mb-4">{% if forloop.first %}{{ site.hero_subtitle }}{% else %}{{ s.subtitle }}{% endif %}</p>
+          <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'admissions:portal_dashboard' %}" class="btn btn-white btn-lg">Apply for admission</a>
+            {% if s.button_text %}<a href="{{ s.button_url }}" class="btn btn-outline-white btn-lg">{{ s.button_text }}</a>{% else %}<a href="{% url 'website:programmes' %}" class="btn btn-outline-white btn-lg">Explore programmes</a>{% endif %}
+          </div>
+        </div></div>
+      </div>
+      {% empty %}
+      <div class="carousel-item active">
+        <img src="{% static 'img/campus/graduation-1.jpg' %}" alt="Graduation ceremony">
+        <div class="hero-overlay"></div>
+        <div class="hero-content"><div class="container"><h1 class="mb-3">{{ site.hero_title }}</h1><p class="lead mb-4">{{ site.hero_subtitle }}</p>
+          <a href="{% url 'admissions:portal_dashboard' %}" class="btn btn-white btn-lg">Apply for admission</a></div></div>
+      </div>
+      {% endfor %}
+    </div>
+    {% if slides|length > 1 %}
+    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev"><span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="visually-hidden">Previous</span></button>
+    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next"><span class="carousel-control-next-icon" aria-hidden="true"></span><span class="visually-hidden">Next</span></button>
+    {% endif %}
+  </div>
+</section>
+
+<div class="container quicklinks">
+  <div class="row g-3">
+    <div class="col-md-4"><a class="quicklink" href="{% url 'admissions:portal_dashboard' %}"><span class="ql-icon"><i class="bi bi-pencil-square"></i></span><span><strong>Apply online</strong><span>Create an account and submit your form</span></span></a></div>
+    <div class="col-md-4"><a class="quicklink green" href="{% url 'accounts:student_login' %}"><span class="ql-icon"><i class="bi bi-mortarboard"></i></span><span><strong>Student Portal</strong><span>Courses, results, fees and documents</span></span></a></div>
+    <div class="col-md-4"><a class="quicklink" href="{% url 'website:programmes' %}"><span class="ql-icon"><i class="bi bi-journal-medical"></i></span><span><strong>Our programmes</strong><span>{{ programmes|length }} accredited health programmes</span></span></a></div>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-5 reveal">
+        {% if site.head_photo %}
+        <div class="welcome-photo"><img src="{{ site.head_photo.url }}" alt="{{ site.head_name|default:site.head_title }}">
+          <div class="caption"><div class="fw-bold">{{ site.head_name }}</div><div class="small text-muted">{{ site.head_title }}</div></div></div>
+        {% else %}
+        <div class="panel p-4 text-center" style="background:linear-gradient(160deg,var(--afc-sky-50),#fff)">
+          <img src="{{ site_logo }}" alt="{{ site.college_name }} seal" class="img-fluid mx-auto" style="max-width:280px">
+          <div class="small-caps mt-3">{{ site.motto }}</div>
+        </div>
+        {% endif %}
+      </div>
+      <div class="col-lg-7 reveal">
+        <div class="eyebrow">Welcome message</div>
+        <h2 class="section-title">A word from the {{ site.head_title }}</h2>
+        <div class="quote-mark">&ldquo;</div>
+        <div class="prose">{{ site.head_message|default:site.intro|linebreaks }}</div>
+        {% if site.head_name %}<div class="signature mt-3">{{ site.head_name }}</div><div class="small text-muted">{{ site.head_title }}, {{ site.college_name }}</div>{% endif %}
+        <a href="{% url 'website:about' %}" class="btn btn-outline-primary mt-4">About the College <i class="bi bi-arrow-right ms-1"></i></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-end flex-wrap gap-3 mb-4">
+      <div class="section-head mb-0"><div class="eyebrow">Academic programmes</div><h2 class="section-title">Train for a career in health</h2><p class="section-lead mb-0">Programmes structured on the national curricula of the NBTE and the Community Health Practitioners Registration Board of Nigeria.</p></div>
+      <a href="{% url 'website:programmes' %}" class="btn btn-light">All programmes</a>
+    </div>
+    <div class="row g-4">
+      {% for p in programmes %}
+      <div class="col-md-6 col-xl-3 d-flex reveal">
+        <a class="programme-card w-100" href="{% url 'website:programme_detail' p.slug %}">
+          <div class="pc-top"><div class="pc-icon"><i class="bi {{ p.icon }}"></i></div><h3>{{ p.name }}</h3><p>{{ p.summary|truncatewords:24 }}</p></div>
+          <div class="pc-meta"><span><i class="bi bi-clock me-1"></i>{{ p.duration_years }} years</span><span><i class="bi bi-award me-1"></i>{% if 'National Diploma' in p.award_title %}ND{% else %}Diploma{% endif %}</span></div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% if highlights %}
+<section class="section">
+  <div class="container">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-5 reveal">
+        <div class="eyebrow">Why Alfurqan College</div>
+        <h2 class="section-title">Character and learning, together</h2>
+        <p class="section-lead">{{ site.intro|default:site.hero_subtitle }}</p>
+        <img src="{% static 'img/campus/graduation-2.jpg' %}" alt="Graduating students of {{ site.short_name }}" class="img-fluid rounded-4 mt-3 shadow-sm">
+      </div>
+      <div class="col-lg-7"><div class="row g-4">
+        {% for h in highlights %}<div class="col-sm-6 reveal"><div class="feature"><div class="feature-icon"><i class="bi {{ h.icon }}"></i></div><div><h4>{{ h.title }}</h4><p>{{ h.text }}</p></div></div></div>{% endfor %}
+      </div></div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="section section-alt">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-5 reveal">
+        <div class="eyebrow">Notices</div><h2 class="section-title">Latest announcements</h2>
+        <div class="panel px-3 mt-3">
+          {% for a in announcements %}<a class="announcement-item" href="{{ a.get_absolute_url }}"><div class="date-chip"><div class="d">{{ a.published_at|date:"j" }}</div><div class="m">{{ a.published_at|date:"M" }}</div></div><div><div class="fw-semibold">{% if a.is_pinned %}<i class="bi bi-pin-angle-fill text-danger me-1"></i>{% endif %}{{ a.title }}</div><div class="small text-muted">{{ a.summary|default:a.body|striptags|truncatechars:90 }}</div></div></a>
+          {% empty %}<p class="text-muted py-4 mb-0 text-center">No announcements at the moment.</p>{% endfor %}
+        </div>
+      </div>
+      <div class="col-lg-7 reveal">
+        <div class="d-flex justify-content-between align-items-end"><div><div class="eyebrow">News &amp; events</div><h2 class="section-title">From the College</h2></div><a href="{% url 'website:news' %}" class="small fw-semibold mb-3">All news <i class="bi bi-arrow-right"></i></a></div>
+        <div class="row g-3 mt-1">
+          {% for n in news %}<div class="col-md-4"><a class="post-card" href="{{ n.get_absolute_url }}">{% if n.image %}<img src="{{ n.image.url }}" alt="">{% else %}<div class="post-img-fallback"><i class="bi {% if n.category == 'event' %}bi-calendar-event{% else %}bi-newspaper{% endif %}"></i></div>{% endif %}
+            <div class="pc-body"><span class="tag align-self-start">{{ n.get_category_display }}</span><h3>{{ n.title }}</h3><div class="meta">{{ n.published_at|date:"j M Y" }}</div></div></a></div>
+          {% empty %}<div class="col-12"><div class="panel">{% include "components/empty.html" with icon="bi-newspaper" title="News coming soon" %}</div></div>{% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="cta-band reveal">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-8"><h2 class="mb-2">{% if period %}Admission is open for {{ period.session.name }}{% else %}Begin your journey in health sciences{% endif %}</h2>
+          <p class="mb-0">{% if period %}Applications close on {{ period.closes_on|date:"j F Y" }}. {% if period.application_fee %}Application form: {{ period.application_fee|naira }}.{% endif %}{% else %}Check our admission requirements and prepare your documents.{% endif %}</p></div>
+        <div class="col-lg-4 text-lg-end"><a href="{% url 'admissions:portal_dashboard' %}" class="btn btn-white btn-lg me-2">Apply now</a><a href="{% url 'website:admissions' %}" class="btn btn-outline-white btn-lg mt-2 mt-sm-0">Requirements</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

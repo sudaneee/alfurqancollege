@@ -1,0 +1,17 @@
+{% extends "pdf/base.html" %}
+{% block body %}
+<h1>Course Registration Slip</h1>
+<table class="kv" width="100%">
+  <tr><td class="k">Name</td><td><b>{{ reg.student.full_name }}</b></td><td class="k">Matric number</td><td><b>{{ reg.student.matric_number }}</b></td></tr>
+  <tr><td class="k">Programme</td><td>{{ reg.student.programme.name }}</td><td class="k">Department</td><td>{{ reg.student.department }}</td></tr>
+  <tr><td class="k">Level</td><td>{{ reg.level_label }}</td><td class="k">Session / semester</td><td>{{ reg.semester }}</td></tr>
+  <tr><td class="k">Status</td><td>{{ reg.get_status_display }}</td><td class="k">Submitted</td><td>{{ reg.submitted_at|date:"j M Y" }}</td></tr>
+</table>
+<h2>Registered courses</h2>
+<table class="grid"><thead><tr><th>#</th><th>Code</th><th>Course title</th><th class="num">Units</th><th>Remark</th></tr></thead>
+<tbody>{% for i in items %}<tr><td>{{ forloop.counter }}</td><td>{{ i.course.code }}</td><td>{{ i.course.title }}</td><td class="num">{{ i.course.credit_units }}</td><td>{% if i.is_carryover %}Carry-over{% endif %}</td></tr>{% endfor %}
+<tr class="total"><td colspan="3">Total credit units</td><td class="num">{{ reg.total_units }}</td><td></td></tr></tbody></table>
+<table width="100%" class="sig"><tr><td>______________________<br>Student's signature</td><td>______________________<br>Course adviser</td><td>______________________<br>Head of Department</td></tr></table>
+{% if reg.status == 'approved' %}<p><span class="stamp">APPROVED {{ reg.reviewed_at|date:"j M Y" }}</span></p>{% endif %}
+{% if reg.student.is_sample %}<p class="sample">SAMPLE DOCUMENT — demonstration data</p>{% endif %}
+{% endblock %}

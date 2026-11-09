@@ -1,0 +1,46 @@
+{% extends "website/base.html" %}
+{% load core_tags %}
+{% block title %}Admissions · {{ site.college_name }}{% endblock %}
+{% block content %}
+{% include "website/page_hero.html" with heading="Admissions" lead="Everything you need to apply: requirements, steps, fees and the application portal." %}
+<section class="section">
+  <div class="container">
+    <div class="row g-5">
+      <div class="col-lg-8">
+        {% if period %}
+        <div class="alert alert-success d-flex gap-3 align-items-center"><i class="bi bi-megaphone-fill fs-4"></i><div><strong>{{ period.name }} is open.</strong> Applications close on {{ period.closes_on|date:"l, j F Y" }}. Application form: <strong>{% if period.application_fee %}{{ period.application_fee|naira }}{% else %}free{% endif %}</strong>.</div></div>
+        {% elif upcoming %}<div class="alert alert-info"><strong>{{ upcoming.name }}</strong> opens on {{ upcoming.opens_on|date:"j F Y" }}.</div>
+        {% else %}<div class="alert alert-warning">There is no open application period at the moment. Watch this page and our announcements.</div>{% endif %}
+
+        {% if site.admission_overview %}<div class="prose mb-4">{{ site.admission_overview|linebreaks }}</div>{% endif %}
+
+        <h2 class="h4 fw-bold mt-4">How to apply</h2>
+        {% if site.steps_list %}<ol class="steps mt-3">{% for s in site.steps_list %}<li><div>{{ s }}</div></li>{% endfor %}</ol>{% endif %}
+
+        <h2 class="h4 fw-bold mt-5">Programme entry requirements</h2>
+        <div class="accordion mt-3" id="req">
+          {% for p in programmes %}
+          <div class="accordion-item"><h3 class="accordion-header"><button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#r{{ p.pk }}">{{ p.name }} <span class="small text-muted ms-2">· {{ p.duration_years }} years</span></button></h3>
+            <div id="r{{ p.pk }}" class="accordion-collapse collapse" data-bs-parent="#req"><div class="accordion-body">
+              <ul class="check-list small">{% for r in p.entry_requirements|split_lines %}<li>{{ r }}</li>{% endfor %}</ul>
+              <a href="{% url 'website:programme_detail' p.slug %}" class="small fw-semibold">Programme details →</a></div></div></div>
+          {% endfor %}
+        </div>
+        {% if site.requirements_list %}<h2 class="h4 fw-bold mt-5">General requirements</h2><ul class="check-list mt-3">{% for r in site.requirements_list %}<li>{{ r }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      <aside class="col-lg-4">
+        <div class="panel p-4 mb-3">
+          <h2 class="h5 fw-bold">Application portal</h2>
+          <p class="small text-muted">Create an account, complete the form, upload documents, pay and track your admission status — all online.</p>
+          <a class="btn btn-primary w-100 mb-2" href="{% url 'accounts:applicant_signup' %}">Create applicant account</a>
+          <a class="btn btn-light w-100" href="{% url 'accounts:applicant_login' %}">Continue my application</a>
+          <p class="small text-muted mt-3 mb-0"><i class="bi bi-info-circle me-1"></i>Cannot apply online? Visit the Admissions Office — staff can complete the process for you.</p>
+        </div>
+        <div class="panel p-4"><h2 class="h6 fw-bold">Admission notices</h2>
+          {% for n in notices %}<a class="announcement-item" href="{{ n.get_absolute_url }}"><div><div class="fw-semibold small">{{ n.title }}</div><div class="small text-muted">{{ n.published_at|date:"j M Y" }}</div></div></a>
+          {% empty %}<p class="small text-muted mb-0">No notices yet.</p>{% endfor %}</div>
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}

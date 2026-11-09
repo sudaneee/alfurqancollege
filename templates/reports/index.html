@@ -1,0 +1,12 @@
+{% extends "staff/base.html" %}
+{% block page_title %}Reports{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Reports</h1><p class="sub">Every report can be viewed on screen and exported to Excel or PDF.</p></div></div>
+{% for group, items in groups.items %}
+<div class="small-caps mb-2 mt-3">{{ group }}</div>
+<div class="row g-3 mb-2">{% for r in items %}
+  <div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'reports:view' r.key %}"><i class="bi {{ r.icon }}"></i><strong>{{ r.title }}</strong><span>{{ r.description }}</span></a></div>
+{% endfor %}</div>
+{% empty %}<div class="panel">{% include "components/empty.html" with title="No reports available" text="Your role does not include access to reports." %}</div>
+{% endfor %}
+{% endblock %}

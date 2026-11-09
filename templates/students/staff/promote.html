@@ -1,0 +1,25 @@
+{% extends "staff/base.html" %}
+{% block page_title %}Promote students{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'students:list' %}">Students</a> / Promotion</div><h1>Promote students</h1><p class="sub">Move enrolled students to the next year of their programme. Outstanding (failed) courses are shown so you can decide individually.</p></div></div>
+<div class="panel mb-3"><form method="get" class="panel-body"><div class="row g-3 align-items-end">
+  {% for field in form %}<div class="col-md-3"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}</div>{% endfor %}
+  <div class="col-md-3"><button class="btn btn-primary w-100">Load students</button></div>
+</div></form></div>
+{% if form.is_valid %}
+<form method="post" class="panel" data-confirm="Promote the selected students?">{% csrf_token %}
+  <div class="panel-header"><h2 class="panel-title">{{ form.cleaned_data.programme }} — Year {{ form.cleaned_data.year }} ({{ rows|length }} student{{ rows|length|pluralize }})</h2>
+    <button class="btn btn-primary btn-sm" {% if not rows %}disabled{% endif %}><i class="bi bi-arrow-up-circle me-1"></i>Promote selected</button></div>
+  {% if rows %}
+  <div class="table-wrap"><table class="table table-hover table-stack">
+    <thead><tr><th><input type="checkbox" class="form-check-input" data-check-all="students" aria-label="Select all"></th><th>Student</th><th class="num">CGPA</th><th>Outstanding courses</th></tr></thead>
+    <tbody>{% for r in rows %}
+      <tr><td><input type="checkbox" class="form-check-input" name="students" value="{{ r.s.pk }}" {% if not r.outstanding %}checked{% endif %} aria-label="Select"></td>
+        <td data-label="Student"><a href="{% url 'students:detail' r.s.pk %}" class="cell-title">{{ r.s.full_name }}</a><div class="cell-sub">{{ r.s.matric_number }}</div></td>
+        <td data-label="CGPA" class="num">{{ r.cgpa|default:"—" }}</td>
+        <td data-label="Outstanding">{% for c in r.outstanding %}<span class="tag me-1" style="background:var(--afc-red-50);color:var(--afc-red)">{{ c }}</span>{% empty %}<span class="text-muted small">None</span>{% endfor %}</td></tr>
+    {% endfor %}</tbody></table></div>
+  {% else %}{% include "components/empty.html" with title="No enrolled students at this level" %}{% endif %}
+</form>
+{% endif %}
+{% endblock %}

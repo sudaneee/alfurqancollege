@@ -1,0 +1,43 @@
+{% extends "staff/base.html" %}
+{% block page_title %}Course allocation{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'academics:overview' %}">Academic setup</a> / Course allocation</div><h1>Course allocation</h1><p class="sub">Assign lecturers to courses. The coordinator downloads score sheets and submits results.</p></div>
+</div>
+<div class="row g-3">
+  <div class="col-xl-8">
+    <div class="panel">
+      <div class="panel-header">
+        <form class="filters" method="get">
+          <select name="semester" class="form-select" onchange="this.form.submit()">{% for s in semesters %}<option value="{{ s.pk }}" {% if s.pk == semester.pk %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+          <select name="programme" class="form-select" onchange="this.form.submit()"><option value="">All programmes</option>{% for p in programmes %}<option value="{{ p.pk }}" {% if prog == p.pk|stringformat:'s' %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select>
+        </form>
+      </div>
+      {% if allocations %}
+      <div class="table-wrap"><table class="table table-hover table-stack">
+        <thead><tr><th>Course</th><th>Programme / level</th><th>Lecturer</th><th>Role</th><th></th></tr></thead>
+        <tbody>{% for a in allocations %}
+          <tr><td data-label="Course"><div class="cell-title">{{ a.course.code }}</div><div class="cell-sub">{{ a.course.title }}</div></td>
+            <td data-label="Programme" class="small">{{ a.course.programme.code }} · {{ a.course.level_label }}</td>
+            <td data-label="Lecturer">{{ a.lecturer }}</td>
+            <td data-label="Role">{% if a.is_coordinator %}<span class="tag">Coordinator</span>{% else %}<span class="tag tag-green">Co-lecturer</span>{% endif %}</td>
+            <td class="text-end"><form method="post" action="{% url 'academics:allocation_delete' a.pk %}" data-confirm="Remove this allocation?">{% csrf_token %}<button class="btn btn-ghost btn-sm text-danger" aria-label="Remove"><i class="bi bi-x-lg"></i></button></form></td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}{% include "components/empty.html" with icon="bi-person-video3" title="No allocations" text="Use the form to assign lecturers to courses for this semester." %}{% endif %}
+    </div>
+    {% if unallocated %}
+    <div class="panel mt-3"><div class="panel-header"><h2 class="panel-title">Not yet allocated ({{ unallocated|length }})</h2></div>
+      <div class="panel-body">{% for c in unallocated %}<span class="tag me-1 mb-1" title="{{ c.title }}">{{ c.programme.code }} {{ c.code }}</span>{% endfor %}</div></div>
+    {% endif %}
+  </div>
+  <div class="col-xl-4">
+    <div class="panel"><div class="panel-header"><h2 class="panel-title">Allocate a course</h2></div>
+      <form method="post" class="panel-body needs-validation" novalidate>{% csrf_token %}
+        {% include "components/form_fields.html" with cols="col-12" %}
+        <button class="btn btn-primary mt-3 w-100"><i class="bi bi-plus-lg me-1"></i>Allocate</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

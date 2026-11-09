@@ -1,0 +1,17 @@
+{% extends "staff/base.html" %}
+{% block page_title %}Website content{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Website content</h1><p class="sub">Manage everything on alfurqancollege.com.ng without a developer.</p></div>
+  <div class="page-actions"><a class="btn btn-light" href="{% url 'website:home' %}" target="_blank"><i class="bi bi-box-arrow-up-right me-1"></i>View website</a><a class="btn btn-primary" href="{% url 'website:post_create' %}"><i class="bi bi-plus-lg me-1"></i>New post</a></div></div>
+<div class="row g-3">
+  <div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'website:post_list' %}"><i class="bi bi-newspaper"></i><strong>News &amp; announcements</strong><span>{{ counts.posts }} posts</span></a></div>
+  <div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'website:messages' %}?open=1"><i class="bi bi-envelope"></i><strong>Contact messages</strong><span>{{ counts.unread }} awaiting response</span></a></div>
+  <div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'website:slide_list' %}"><i class="bi bi-images"></i><strong>Homepage carousel</strong><span>{{ counts.slides }} slides</span></a></div>
+  <div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'core:settings' %}"><i class="bi bi-file-richtext"></i><strong>Pages text</strong><span>Welcome message, about, vision, mission, admissions, contact</span></a></div>
+  <div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'website:highlight_list' %}"><i class="bi bi-stars"></i><strong>Why choose us</strong><span>{{ counts.highlights }} items</span></a></div>
+  <div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'website:leader_list' %}"><i class="bi bi-person-badge"></i><strong>Leadership</strong><span>{{ counts.leaders }} profiles</span></a></div>
+  <div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'website:gallery_list' %}"><i class="bi bi-camera"></i><strong>Gallery</strong><span>{{ counts.gallery }} images</span></a></div>
+  <div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'academics:programme_list' %}"><i class="bi bi-mortarboard"></i><strong>Programme pages</strong><span>Summary, requirements, careers, images</span></a></div>
+  <div class="col-sm-6 col-xl-4"><a class="action-tile" href="{% url 'academics:document_list' %}"><i class="bi bi-download"></i><strong>Public downloads</strong><span>Documents marked public</span></a></div>
+</div>
+{% endblock %}

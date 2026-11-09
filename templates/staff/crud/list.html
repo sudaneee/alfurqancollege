@@ -1,0 +1,51 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    {% if crud.section %}<div class="crumbs">{{ crud.section }}</div>{% endif %}
+    <h1>{{ title }}</h1>
+    {% if crud.description %}<p class="sub">{{ crud.description }}</p>{% endif %}
+  </div>
+  <div class="page-actions">
+    {% if create_url %}<a href="{{ create_url }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Add {{ singular|lower }}</a>{% endif %}
+  </div>
+</div>
+<div class="panel">
+  {% if crud.search_fields %}
+  <div class="panel-header">
+    <form class="filters" method="get">
+      <input type="search" name="q" value="{{ q }}" class="form-control search-input" placeholder="Search {{ title|lower }}…">
+      <button class="btn btn-light btn-sm">Search</button>
+      {% if q %}<a href="{{ list_url }}" class="btn btn-ghost btn-sm">Clear</a>{% endif %}
+    </form>
+    <span class="small text-muted">{{ page.paginator.count }} record{{ page.paginator.count|pluralize }}</span>
+  </div>
+  {% endif %}
+  {% if rows %}
+  <div class="table-wrap">
+    <table class="table table-hover table-stack">
+      <thead><tr>{% for label, attr in columns %}<th>{{ label }}</th>{% endfor %}<th class="text-end">Actions</th></tr></thead>
+      <tbody>
+      {% for row in rows %}
+        <tr>
+          {% for label, attr in columns %}
+          <td data-label="{{ label }}">{% if forloop.first %}<a class="cell-title" href="{{ row.detail_url|default:row.edit_url }}">{{ row.obj|getattr_:attr }}</a>{% else %}{{ row.obj|getattr_:attr }}{% endif %}</td>
+          {% endfor %}
+          <td class="text-end text-nowrap">
+            <a href="{{ row.edit_url }}" class="btn btn-light btn-sm"><i class="bi bi-pencil"></i><span class="d-none d-xl-inline ms-1">Edit</span></a>
+            {% if row.delete_url %}<a href="{{ row.delete_url }}" class="btn btn-ghost btn-sm text-danger" aria-label="Delete"><i class="bi bi-trash"></i></a>{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/pagination.html" %}
+  {% else %}
+    {% if q %}{% include "components/empty.html" with icon="bi-search" title="No matches" text="Try a different search term." %}
+    {% else %}{% include "components/empty.html" with title="No "|add:title|lower|add:" yet" text="Records you add will appear here." action_url=create_url action_label="Add "|add:singular|lower %}{% endif %}
+  {% endif %}
+</div>
+{% endblock %}

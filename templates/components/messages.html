@@ -1,0 +1,11 @@
+{% if messages %}
+<div class="toast-stack" role="status" aria-live="polite">
+  {% for message in messages %}
+  <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} mb-0">
+    <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% elif message.tags == 'error' %}bi-exclamation-octagon-fill{% elif message.tags == 'warning' %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %} mt-1"></i>
+    <div class="flex-grow-1">{{ message|linebreaksbr }}</div>
+    <button type="button" class="btn-close btn-sm" aria-label="Dismiss" onclick="this.parentElement.remove()"></button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}

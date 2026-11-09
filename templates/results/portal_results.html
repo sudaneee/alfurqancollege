@@ -1,0 +1,28 @@
+{% extends "students/portal/base.html" %}
+{% block page_title %}My results{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>My results</h1><p class="sub">Only results approved and published by the College are shown.</p></div>
+  {% if record.semesters %}<div class="page-actions"><a class="btn btn-light" href="?print=1" target="_blank"><i class="bi bi-printer me-1"></i>Statement of results</a></div>{% endif %}
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><div class="panel stat"><div class="stat-icon green"><i class="bi bi-graph-up"></i></div><div><div class="stat-label">CGPA</div><div class="stat-value">{{ record.cgpa|default:"—" }}</div><div class="stat-sub">out of {{ record.scheme.max_points|floatformat:2 }}</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="panel stat"><div class="stat-icon"><i class="bi bi-award"></i></div><div><div class="stat-label">Class</div><div class="stat-value fs-5 mt-1">{{ record.classification|default:"—" }}</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="panel stat"><div class="stat-icon"><i class="bi bi-stack"></i></div><div><div class="stat-label">Credits earned</div><div class="stat-value">{{ record.credits_earned }}</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="panel stat"><div class="stat-icon {% if record.outstanding %}red{% else %}green{% endif %}"><i class="bi bi-arrow-repeat"></i></div><div><div class="stat-label">Carry-over courses</div><div class="stat-value">{{ record.outstanding|length }}</div><div class="stat-sub">{{ record.outstanding|join:", " }}</div></div></div></div>
+</div>
+{% for sem in record.semesters reversed %}
+<div class="panel mb-3">
+  <div class="panel-header"><h2 class="panel-title">{{ sem.semester }}</h2><div class="d-flex gap-2"><span class="tag">GPA {{ sem.gpa|default:"—" }}</span><span class="tag tag-green">CGPA {{ sem.cgpa|default:"—" }}</span></div></div>
+  <div class="table-wrap"><table class="table table-stack">
+    <thead><tr><th>Code</th><th>Course</th><th class="num">Units</th><th class="num">CA</th><th class="num">Exam</th><th class="num">Total</th><th>Grade</th><th class="num">Points</th></tr></thead>
+    <tbody>{% for s in sem.scores %}<tr>
+      <td data-label="Code" class="fw-semibold">{{ s.sheet.course.code }}</td><td data-label="Course">{{ s.sheet.course.title }}</td>
+      <td data-label="Units" class="num">{{ s.credit_units }}</td><td data-label="CA" class="num">{{ s.ca|floatformat:0 }}</td><td data-label="Exam" class="num">{{ s.exam|floatformat:0 }}</td>
+      <td data-label="Total" class="num fw-semibold">{{ s.total|floatformat:0 }}</td><td data-label="Grade" class="fw-bold {% if not s.passed %}text-danger{% endif %}">{{ s.grade }}</td><td data-label="Points" class="num">{{ s.points|default_if_none:"P/F" }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+{% empty %}
+<div class="panel">{% include "components/empty.html" with icon="bi-clipboard-data" title="No published results yet" text="Your results will appear here once they are approved and published." %}</div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "portal/base.html" %}
+{% block portal_name %}Student Portal{% endblock %}
+{% block home_url %}{% url 'students:portal_dashboard' %}{% endblock %}
+{% block role_label %}{{ request.user.student.matric_number }}{% endblock %}
+{% block nav %}
+{% with u=request.resolver_match.url_name %}
+<a class="side-link {% if u == 'portal_dashboard' %}active{% endif %}" href="{% url 'students:portal_dashboard' %}"><i class="bi bi-house"></i>Home</a>
+<a class="side-link {% if u == 'portal_profile' %}active{% endif %}" href="{% url 'students:portal_profile' %}"><i class="bi bi-person"></i>My profile</a>
+<div class="nav-group-label">Academics</div>
+<a class="side-link {% if u == 'portal_courses' %}active{% endif %}" href="{% url 'registration:portal_courses' %}"><i class="bi bi-journal-check"></i>Course registration</a>
+<a class="side-link {% if u == 'portal_results' %}active{% endif %}" href="{% url 'results:portal_results' %}"><i class="bi bi-clipboard-data"></i>My results</a>
+<div class="nav-group-label">Finance</div>
+<a class="side-link {% if u == 'portal_fees' or u == 'portal_pay' %}active{% endif %}" href="{% url 'bursary:portal_fees' %}"><i class="bi bi-wallet2"></i>Fees &amp; payments</a>
+<div class="nav-group-label">More</div>
+<a class="side-link {% if u == 'portal_documents' %}active{% endif %}" href="{% url 'students:portal_documents' %}"><i class="bi bi-folder2"></i>Documents</a>
+<a class="side-link {% if u == 'portal_announcements' %}active{% endif %}" href="{% url 'students:portal_announcements' %}"><i class="bi bi-megaphone"></i>Announcements</a>
+<a class="side-link {% if u == 'list' %}active{% endif %}" href="{% url 'notifications:list' %}"><i class="bi bi-bell"></i>Notifications{% if unread_notifications %}<span class="count">{{ unread_notifications }}</span>{% endif %}</a>
+{% endwith %}
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "pdf/base.html" %}
+{% block pagesize %}a4 landscape{% endblock %}
+{% block body %}
+<h1>Semester Result Sheet</h1>
+<p><b>{{ programme.award_title }}</b> · {{ level_label }} · {{ semester }}</p>
+<table class="grid"><thead><tr><th>Matric</th><th>Name</th>{% for sh in data.sheets %}<th class="num">{{ sh.course.code }}<br>({{ sh.course.credit_units }})</th>{% endfor %}<th class="num">Units</th><th class="num">GPA</th><th class="num">CGPA</th><th>Remark</th></tr></thead>
+<tbody>{% for r in data.rows %}<tr><td>{{ r.s.matric_number }}</td><td>{{ r.s.full_name }}</td>{% for c in r.cells %}<td class="num">{% if c and c.total is not None %}{{ c.total|floatformat:0 }} {{ c.grade }}{% endif %}</td>{% endfor %}<td class="num">{{ r.units }}</td><td class="num">{{ r.gpa|default:"" }}</td><td class="num">{{ r.cgpa|default:"" }}</td><td>{{ r.remark }}</td></tr>{% endfor %}</tbody></table>
+<table width="100%" class="sig"><tr><td>______________________<br>Head of Department</td><td>______________________<br>Examinations Officer</td><td>______________________<br>Chairman, Academic Board</td></tr></table>
+{% endblock %}

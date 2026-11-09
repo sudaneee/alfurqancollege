@@ -1,0 +1,85 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}{{ sheet.course.code }} result{% endblock %}
+{% block content %}
+{% can 'manage_all_results' as mar %}{% can 'approve_results' as apr %}{% can 'publish_results' as pub %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% if is_lecturer %}{% url 'results:my_courses' %}{% else %}{% url 'results:staff_list' %}{% endif %}">Results</a> / {{ sheet.semester }}</div>
+    <h1>{{ sheet.course.code }} — {{ sheet.course.title }}</h1>
+    <p class="sub">{{ sheet.course.programme.name }} · {{ sheet.course.level_label }} · {{ sheet.course.credit_units }} units · CA {{ sheet.ca_max|floatformat:0 }} / Exam {{ sheet.exam_max|floatformat:0 }} · {% status_badge sheet.status sheet.get_status_display %}</p></div>
+  <div class="page-actions">
+    <a class="btn btn-light" href="?export=xlsx"><i class="bi bi-file-earmark-spreadsheet me-1 text-success"></i>Export</a>
+    <a class="btn btn-light" href="?export=pdf" target="_blank"><i class="bi bi-file-earmark-pdf me-1 text-danger"></i>PDF</a>
+  </div>
+</div>
+
+{% if sheet.status == 'returned' %}{% with ev=events.0 %}<div class="alert alert-danger"><strong>Returned for correction</strong>{% if ev.note %}: {{ ev.note }}{% endif %}</div>{% endwith %}{% endif %}
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3"><div class="panel stat"><div class="stat-icon"><i class="bi bi-people"></i></div><div><div class="stat-label">Students</div><div class="stat-value">{{ stats.count }}</div><div class="stat-sub">{{ stats.complete }} complete</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="panel stat"><div class="stat-icon green"><i class="bi bi-check2-circle"></i></div><div><div class="stat-label">Passed</div><div class="stat-value">{{ stats.passed }}</div><div class="stat-sub">Pass mark {{ sheet.scheme.pass_mark|floatformat:0 }}</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="panel stat"><div class="stat-icon amber"><i class="bi bi-graph-up"></i></div><div><div class="stat-label">Average</div><div class="stat-value">{{ stats.average|default:"—" }}</div><div class="stat-sub">High {{ stats.highest|floatformat:0|default:"—" }} · Low {{ stats.lowest|floatformat:0|default:"—" }}</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="panel stat"><div><div class="stat-label mb-1">Grade distribution</div><div class="d-flex flex-wrap gap-1">{% for g, n in stats.dist %}<span class="tag">{{ g }}: {{ n }}</span>{% endfor %}</div></div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-xl-8">
+    <form method="post" class="panel">{% csrf_token %}<input type="hidden" name="action" value="save_scores">
+      <div class="panel-header"><h2 class="panel-title">Scores</h2>
+        {% if can_edit %}<div class="d-flex gap-2 flex-wrap">
+          <a class="btn btn-light btn-sm" href="{% url 'core:bulk_template' 'scores' %}?sheet={{ sheet.pk }}"><i class="bi bi-download me-1"></i>Download score sheet</a>
+          <a class="btn btn-light btn-sm" href="{% url 'core:bulk_home' 'scores' %}?sheet={{ sheet.pk }}"><i class="bi bi-upload me-1"></i>Upload Excel</a>
+        </div>{% endif %}</div>
+      {% if scores %}
+      <div class="table-wrap"><table class="table table-compact table-stack align-middle">
+        <thead><tr><th>#</th><th>Matric number</th><th>Student</th><th style="width:110px">CA /{{ sheet.ca_max|floatformat:0 }}</th><th style="width:110px">Exam /{{ sheet.exam_max|floatformat:0 }}</th><th class="num">Total</th><th>Grade</th></tr></thead>
+        <tbody>{% for s in scores %}
+          <tr data-score-row>
+            <td class="text-muted">{{ forloop.counter }}</td>
+            <td data-label="Matric" class="fw-semibold text-nowrap">{{ s.student.matric_number }}</td>
+            <td data-label="Student">{{ s.student.full_name }}</td>
+            {% if can_edit %}
+            <td data-label="CA"><input class="form-control form-control-sm" type="number" step="0.01" min="0" max="{{ sheet.ca_max }}" name="ca_{{ s.pk }}" value="{{ s.ca|default_if_none:''|stringformat:'s' }}" data-ca></td>
+            <td data-label="Exam"><input class="form-control form-control-sm" type="number" step="0.01" min="0" max="{{ sheet.exam_max }}" name="exam_{{ s.pk }}" value="{{ s.exam|default_if_none:''|stringformat:'s' }}" data-exam></td>
+            {% else %}<td data-label="CA">{{ s.ca|default_if_none:"—" }}</td><td data-label="Exam">{{ s.exam|default_if_none:"—" }}</td>{% endif %}
+            <td data-label="Total" class="num fw-semibold" {% if can_edit %}data-total{% endif %}>{{ s.total|default_if_none:"—" }}</td>
+            <td data-label="Grade" class="fw-semibold {% if s.total is not None and not s.passed %}text-danger{% endif %}">{{ s.grade|default:"—" }}</td>
+          </tr>{% endfor %}</tbody>
+      </table></div>
+      {% if can_edit %}<div class="panel-footer d-flex gap-2 flex-wrap align-items-center">
+        {% if not sheet.is_editable %}<input class="form-control form-control-sm" style="max-width:340px" name="note" placeholder="Reason for correction (required)" required>{% endif %}
+        <button class="btn btn-primary"><i class="bi bi-save me-1"></i>Save scores</button><span class="small text-muted">Totals and grades are calculated automatically.</span></div>{% endif %}
+      {% else %}{% include "components/empty.html" with icon="bi-people" title="No registered students" text="Students appear here once their course registration for this semester is submitted." %}{% endif %}
+    </form>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Workflow</h2></div><div class="panel-body">
+      <div class="progress-steps flex-column mb-3">
+        {% with st=sheet.status %}
+        <div class="ps {% if st != 'draft' and st != 'returned' %}done{% else %}current{% endif %}"><i class="bi bi-pencil"></i>Lecturer enters &amp; submits</div>
+        <div class="ps {% if st == 'hod_approved' or st == 'approved' or st == 'published' %}done{% elif st == 'submitted' %}current{% endif %}"><i class="bi bi-person-check"></i>HOD reviews</div>
+        <div class="ps {% if st == 'approved' or st == 'published' %}done{% elif st == 'hod_approved' %}current{% endif %}"><i class="bi bi-patch-check"></i>Final approval</div>
+        <div class="ps {% if st == 'published' %}done{% elif st == 'approved' %}current{% endif %}"><i class="bi bi-broadcast"></i>Published to students</div>
+        {% endwith %}
+      </div>
+      <form method="post">{% csrf_token %}
+        {% if sheet.is_editable and is_lecturer or sheet.is_editable and mar %}<button name="action" value="submit" class="btn btn-primary w-100 mb-2" data-confirm="Submit this result to the HOD? You will not be able to edit it afterwards.">Submit to HOD</button>{% endif %}
+        {% if sheet.status == 'submitted' and is_hod or sheet.status == 'submitted' and mar %}
+          <textarea name="note" class="form-control mb-2" rows="2" placeholder="Comment (required when returning)"></textarea>
+          <div class="d-flex gap-2 mb-2"><button name="action" value="hod_approve" class="btn btn-success flex-grow-1">Approve (HOD)</button><button name="action" value="hod_return" class="btn btn-outline-danger">Return</button></div>{% endif %}
+        {% if sheet.status == 'hod_approved' and apr or sheet.status == 'hod_approved' and mar %}
+          <textarea name="note" class="form-control mb-2" rows="2" placeholder="Comment (required when returning)"></textarea>
+          <div class="d-flex gap-2 mb-2"><button name="action" value="approve" class="btn btn-success flex-grow-1">Final approval</button><button name="action" value="return" class="btn btn-outline-danger">Return</button></div>{% endif %}
+        {% if sheet.status == 'approved' and pub %}<button name="action" value="publish" class="btn btn-success w-100 mb-2" data-confirm="Publish this result? Students will be notified.">Publish result</button>{% endif %}
+        {% if sheet.status == 'published' and pub %}<input name="note" class="form-control mb-2" placeholder="Reason for unpublishing"><button name="action" value="unpublish" class="btn btn-light w-100 mb-2" data-confirm="Unpublish this result?">Unpublish</button>{% endif %}
+        {% if mar and not sheet.is_editable %}<hr><label class="form-label small">Reopen for correction (Super Admin)</label><input name="note" class="form-control mb-2" placeholder="Reason (required)"><button name="action" value="reopen" class="btn btn-outline-danger w-100 mb-2" data-confirm="Reopen this result? It returns to draft and must go through approval again.">Reopen result</button>{% endif %}
+        {% if mar %}<button name="action" value="recompute" class="btn btn-ghost btn-sm w-100">Recompute grades from grading system</button>{% endif %}
+      </form>
+    </div></div>
+    <div class="panel"><div class="panel-header"><h2 class="panel-title">History</h2></div><div class="panel-body">
+      <ul class="timeline">{% for e in events %}<li><div><strong>{{ e.action|nice|title }}</strong>{% if e.note %} — {{ e.note }}{% endif %}</div><div class="t-time">{{ e.created_at|date:"d M Y H:i" }} · {{ e.actor|default:"System" }}</div></li>{% empty %}<li>No activity.</li>{% endfor %}</ul>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}Fees & payment settings{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'core:system' %}">System settings</a> / Bursary</div><h1>Fees &amp; payment settings</h1><p class="sub">All charges are configurable here. Amounts are never hard-coded.</p></div>
+  <div class="page-actions"><a class="btn btn-light" href="{% url 'bursary:category_list' %}">Fee categories</a><a class="btn btn-primary" href="{% url 'bursary:feeitem_create' %}"><i class="bi bi-plus-lg me-1"></i>Add fee</a></div></div>
+<div class="row g-3">
+  <div class="col-xl-8">
+    <div class="panel"><div class="panel-header"><h2 class="panel-title">Fee schedule</h2><a class="small" href="{% url 'bursary:feeitem_list' %}">Manage</a></div>
+      <div class="table-wrap"><table class="table table-hover table-stack"><thead><tr><th>Fee</th><th>Applies to</th><th>Stage</th><th class="num">Amount</th><th>Instalments</th></tr></thead><tbody>
+      {% for i in items %}<tr class="{% if not i.is_active %}text-muted{% endif %}"><td data-label="Fee"><a class="cell-title" href="{% url 'bursary:feeitem_edit' i.pk %}">{{ i.name }}</a><div class="cell-sub">{{ i.category }}</div></td><td data-label="Applies to" class="small">{{ i.scope_label }}</td><td data-label="Stage" class="small">{{ i.get_stage_display }}</td><td data-label="Amount" class="num fw-semibold">{{ i.amount|naira }}</td><td data-label="Instalments" class="small">{% if i.allow_instalments %}Yes{% if i.min_first_payment_percent %} (≥{{ i.min_first_payment_percent }}% first){% endif %}{% else %}No{% endif %}</td></tr>
+      {% empty %}<tr><td colspan="5">{% include "components/empty.html" with title="No fees configured" %}</td></tr>{% endfor %}</tbody></table></div></div>
+    <div class="panel mt-3"><div class="panel-header"><h2 class="panel-title">Recent gateway transactions</h2></div>
+      <div class="table-wrap"><table class="table table-compact"><tbody>{% for l in logs %}<tr><td class="small text-nowrap">{{ l.created_at|date:"d M H:i" }}</td><td class="small">{{ l.gateway }}</td><td class="small">{{ l.event }}</td><td class="small">{{ l.reference }}</td><td>{% if l.success %}{% status_badge 'successful' 'OK' %}{% else %}{% status_badge 'failed' 'Fail' %}{% endif %}</td></tr>{% empty %}<tr><td class="text-muted small">No transactions logged.</td></tr>{% endfor %}</tbody></table></div></div>
+  </div>
+  <div class="col-xl-4">
+    <div class="panel"><div class="panel-header"><h2 class="panel-title">Online payment gateway</h2></div>
+      <form method="post" class="panel-body">{% csrf_token %}{% include "components/form_fields.html" with cols="col-12" %}<button class="btn btn-primary mt-3 w-100">Save</button></form>
+      <div class="panel-footer small">
+        <div class="fw-semibold mb-1">API keys (set by the server administrator as environment variables)</div>
+        <div>Paystack: {% if keys.paystack %}<span class="text-success">configured</span>{% else %}<span class="text-danger">not set</span> (PAYSTACK_SECRET_KEY){% endif %}</div>
+        <div>Flutterwave: {% if keys.flutterwave %}<span class="text-success">configured</span>{% else %}<span class="text-danger">not set</span> (FLUTTERWAVE_SECRET_KEY){% endif %}</div>
+        <div>Sandbox: {% if keys.sandbox %}enabled (development){% else %}disabled{% endif %}</div>
+        <div class="mt-2 text-muted">Webhook URLs: <code>/payments/webhook/paystack/</code>, <code>/payments/webhook/flutterwave/</code></div>
+      </div></div>
+  </div>
+</div>
+{% endblock %}

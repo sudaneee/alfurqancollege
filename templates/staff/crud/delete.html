@@ -1,0 +1,15 @@
+{% extends "staff/base.html" %}
+{% block page_title %}Delete {{ singular|lower }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{{ list_url }}">{{ title }}</a> / Delete</div><h1>Delete {{ singular|lower }}</h1></div></div>
+<div class="panel" style="max-width:640px">
+  <div class="panel-body">
+    <p>Are you sure you want to delete <strong>{{ object }}</strong>? This cannot be undone and will be recorded in the audit log.</p>
+    <p class="small text-muted mb-0">Records that are referenced elsewhere (for example a programme with students) cannot be deleted — deactivate them instead.</p>
+  </div>
+  <div class="panel-footer d-flex gap-2">
+    <form method="post">{% csrf_token %}<button class="btn btn-danger"><i class="bi bi-trash me-1"></i>Delete</button></form>
+    <a href="{{ list_url }}" class="btn btn-light">Cancel</a>
+  </div>
+</div>
+{% endblock %}

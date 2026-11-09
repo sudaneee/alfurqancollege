@@ -1,0 +1,11 @@
+{% extends "pdf/base.html" %}
+{% load core_tags %}
+{% block pagesize %}a4 landscape{% endblock %}
+{% block body %}
+<h1>{{ r.title }}</h1>
+{% if data.subtitle %}<p style="text-align:center">{{ data.subtitle }}</p>{% endif %}
+<table class="grid"><thead><tr>{% for h in data.headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+<tbody>{% for row in data.rows %}<tr>{% for c in row %}<td>{% if forloop.counter0 in data.money_cols %}{{ c|naira }}{% else %}{{ c }}{% endif %}</td>{% endfor %}</tr>{% endfor %}
+{% if data.totals %}<tr class="total">{% for c in data.totals %}<td>{% if forloop.counter0 in data.money_cols %}{{ c|naira }}{% else %}{{ c }}{% endif %}</td>{% endfor %}</tr>{% endif %}</tbody></table>
+<p class="muted">Generated {{ generated|date:"j M Y H:i" }} by {{ request.user.get_full_name }}.</p>
+{% endblock %}

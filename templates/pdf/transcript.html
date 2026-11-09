@@ -1,0 +1,23 @@
+{% extends "pdf/base.html" %}
+{% block body %}
+<h1>{% if official %}Academic Transcript{% else %}Statement of Results (unofficial){% endif %}</h1>
+<table class="kv" width="100%">
+  <tr><td class="k">Name</td><td><b>{{ s.full_name }}</b></td><td class="k">Matric number</td><td><b>{{ s.matric_number }}</b></td></tr>
+  <tr><td class="k">Programme</td><td>{{ s.programme.award_title }}</td><td class="k">Department</td><td>{{ s.department }}</td></tr>
+  <tr><td class="k">Session of admission</td><td>{{ s.entry_session }}</td><td class="k">Gender / DOB</td><td>{{ s.get_gender_display }} {{ s.date_of_birth|date:"j M Y" }}</td></tr>
+</table>
+{% for sem in record.semesters %}
+<h2>{{ sem.semester }}</h2>
+<table class="grid"><thead><tr><th width="13%">Code</th><th>Course title</th><th class="num" width="7%">Units</th><th class="num" width="8%">Score</th><th width="7%">Grade</th><th class="num" width="8%">Points</th></tr></thead>
+<tbody>{% for sc in sem.scores %}<tr><td>{{ sc.sheet.course.code }}</td><td>{{ sc.sheet.course.title }}</td><td class="num">{{ sc.credit_units }}</td><td class="num">{{ sc.total|floatformat:0 }}</td><td>{{ sc.grade }}</td><td class="num">{{ sc.points|default_if_none:"P/F" }}</td></tr>{% endfor %}
+<tr class="total"><td colspan="2">GPA {{ sem.gpa|default:"—" }} &nbsp;&nbsp; CGPA {{ sem.cgpa|default:"—" }}</td><td class="num">{{ sem.units }}</td><td colspan="3"></td></tr></tbody></table>
+{% empty %}<p>No published results.</p>{% endfor %}
+<h2>Summary</h2>
+<table class="kv"><tr><td class="k">Cumulative GPA</td><td><b>{{ record.cgpa|default:"—" }}</b> (out of {{ record.scheme.max_points|floatformat:2 }})</td></tr>
+<tr><td class="k">Classification</td><td><b>{{ record.classification|default:"—" }}</b></td></tr>
+<tr><td class="k">Credit units earned</td><td>{{ record.credits_earned }}</td></tr>
+{% if record.outstanding %}<tr><td class="k">Outstanding courses</td><td>{{ record.outstanding|join:", " }}</td></tr>{% endif %}</table>
+<p class="muted">Grading: {% for b in record.scheme.bands.all %}{{ b.letter }} {{ b.min_score|floatformat:0 }}–{{ b.max_score|floatformat:0 }} ({{ b.points }}){% if not forloop.last %}; {% endif %}{% endfor %}.</p>
+{% if official %}<div class="sig"><p>______________________________<br>Registrar</p></div>{% else %}<p class="muted">This statement is for information only. Request an official transcript from the Registry.</p>{% endif %}
+{% if s.is_sample %}<p class="sample">SAMPLE DOCUMENT — demonstration data</p>{% endif %}
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}Search{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Search</h1><p class="sub">{% if q %}Results for “{{ q }}”{% else %}Search by name, matric number, application number, phone, e-mail or payment reference.{% endif %}</p></div></div>
+<form class="d-md-none mb-3" method="get"><input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Search…"></form>
+{% if q and not results.students and not results.applications and not results.invoices %}
+<div class="panel">{% include "components/empty.html" with icon="bi-search" title="No matches" text="Check the spelling or try a matric/application number." %}</div>
+{% endif %}
+{% if results.students %}
+<div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Students</h2></div>
+  <div class="table-wrap"><table class="table table-hover table-stack"><tbody>{% for s in results.students %}
+    <tr><td data-label="Student"><a class="cell-title" href="{% url 'students:detail' s.pk %}">{{ s.full_name }}</a><div class="cell-sub">{{ s.matric_number }}</div></td><td data-label="Programme">{{ s.programme.name }}</td><td data-label="Level">{{ s.level_label }}</td><td data-label="Status">{% status_badge s.status.code s.status.name %}</td></tr>
+  {% endfor %}</tbody></table></div></div>
+{% endif %}
+{% if results.applications %}
+<div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Applications</h2></div>
+  <div class="table-wrap"><table class="table table-hover table-stack"><tbody>{% for a in results.applications %}
+    <tr><td data-label="Applicant"><a class="cell-title" href="{% url 'admissions:staff_detail' a.pk %}">{{ a.full_name }}</a><div class="cell-sub">{{ a.application_number|default:"Draft" }}</div></td><td data-label="Programme">{{ a.first_choice.name }}</td><td data-label="Status">{% status_badge a.status a.get_status_display %}</td></tr>
+  {% endfor %}</tbody></table></div></div>
+{% endif %}
+{% if results.invoices %}
+<div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Invoices</h2></div>
+  <div class="table-wrap"><table class="table table-hover table-stack"><tbody>{% for i in results.invoices %}
+    <tr><td data-label="Invoice"><a class="cell-title" href="{% url 'bursary:invoice_detail' i.pk %}">{{ i.number }}</a><div class="cell-sub">{{ i.description }}</div></td><td data-label="Payer">{{ i.payer_name }}</td><td data-label="Balance" class="num">{{ i.balance|naira }}</td><td data-label="Status">{% status_badge i.status i.get_status_display %}</td></tr>
+  {% endfor %}</tbody></table></div></div>
+{% endif %}
+{% endblock %}

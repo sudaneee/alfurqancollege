@@ -1,0 +1,38 @@
+{% extends "staff/base.html" %}
+{% block page_title %}{% if object %}Edit {{ singular|lower }}{% else %}New {{ singular|lower }}{% endif %}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="crumbs"><a href="{{ list_url }}">{{ title }}</a> / {% if object %}Edit{% else %}New{% endif %}</div>
+    <h1>{% if object %}{{ object }}{% else %}New {{ singular|lower }}{% endif %}</h1>
+  </div>
+</div>
+<form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+  {% csrf_token %}
+  <div class="panel mb-3"><div class="panel-body">{% include "components/form_fields.html" %}</div></div>
+  {% for label, fs in formsets %}
+  <div class="panel mb-3">
+    <div class="panel-header"><h2 class="panel-title">{{ label }}</h2></div>
+    {{ fs.management_form }}
+    {% if fs.non_form_errors %}<div class="alert alert-danger m-3">{{ fs.non_form_errors }}</div>{% endif %}
+    <div class="table-wrap">
+      <table class="table table-compact align-middle">
+        <thead><tr>{% for f in fs.empty_form.visible_fields %}<th>{{ f.label }}</th>{% endfor %}</tr></thead>
+        <tbody>
+        {% for f in fs %}
+          <tr>{% for field in f.visible_fields %}<td>{% if forloop.first %}{% for h in f.hidden_fields %}{{ h }}{% endfor %}{% endif %}{{ field }}{% for e in field.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}</td>{% endfor %}</tr>
+          {% if f.non_field_errors %}<tr><td colspan="20"><div class="text-danger small">{{ f.non_field_errors }}</div></td></tr>{% endif %}
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="panel-footer small text-muted">Fill the empty rows to add more. Tick “Delete” to remove a row. Save to get more empty rows.</div>
+  </div>
+  {% endfor %}
+  <div class="d-flex gap-2 flex-wrap">
+    <button class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Save</button>
+    {% if not object %}<button class="btn btn-light" name="save_add" value="1">Save and add another</button>{% endif %}
+    <a href="{{ list_url }}" class="btn btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "website/base.html" %}
+{% load static %}
+{% block title %}About · {{ site.college_name }}{% endblock %}
+{% block content %}
+{% include "website/page_hero.html" with heading="About the College" lead=site.motto %}
+<section class="section">
+  <div class="container">
+    <div class="row g-5">
+      <div class="col-lg-7 reveal">
+        <div class="eyebrow">Who we are</div>
+        <h2 class="section-title">{{ site.college_name }}</h2>
+        <div class="prose">{% if site.history %}{{ site.history|linebreaks }}{% elif site.intro %}{{ site.intro|linebreaks }}{% else %}<p>Information about the College's background will be published soon.</p>{% endif %}</div>
+      </div>
+      <div class="col-lg-5 reveal"><img src="{% static 'img/campus/graduation-1.jpg' %}" alt="Graduating students and staff of {{ site.short_name }}" class="img-fluid rounded-4 shadow"></div>
+    </div>
+  </div>
+</section>
+<section class="section section-alt">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-md-6 reveal"><div class="value-card"><div class="v-icon mb-2"><i class="bi bi-eye"></i></div><h3 class="h4 fw-bold">Our vision</h3><div class="prose mb-0">{{ site.vision|default:"To be published."|linebreaks }}</div></div></div>
+      <div class="col-md-6 reveal"><div class="value-card"><div class="v-icon mb-2"><i class="bi bi-bullseye"></i></div><h3 class="h4 fw-bold">Our mission</h3><div class="prose mb-0">{{ site.mission|default:"To be published."|linebreaks }}</div></div></div>
+    </div>
+    {% if site.core_values_list %}
+    <div class="section-head center mt-5"><div class="eyebrow">Core values</div><h2 class="section-title">What we stand for</h2></div>
+    <div class="row g-3">{% for v in site.core_values_list %}<div class="col-sm-6 col-lg-3 reveal"><div class="value-card"><div class="v-icon mb-2"><i class="bi bi-check2-circle"></i></div><h4 class="h6 fw-bold">{{ v.title }}</h4>{% if v.text %}<p class="small text-muted mb-0">{{ v.text }}</p>{% endif %}</div></div>{% endfor %}</div>
+    {% endif %}
+  </div>
+</section>
+{% if site.objectives_list %}
+<section class="section"><div class="container"><div class="row g-5">
+  <div class="col-lg-4"><div class="eyebrow">Institutional objectives</div><h2 class="section-title">What we aim to achieve</h2></div>
+  <div class="col-lg-8"><ul class="check-list">{% for o in site.objectives_list %}<li>{{ o }}</li>{% endfor %}</ul></div>
+</div></div></section>
+{% endif %}
+<section class="section section-alt">
+  <div class="container">
+    <div class="section-head center"><div class="eyebrow">Leadership</div><h2 class="section-title">College management</h2></div>
+    {% if leaders %}
+    <div class="row g-4 justify-content-center">{% for l in leaders %}
+      <div class="col-sm-6 col-lg-3 reveal"><div class="panel h-100 text-center p-4">
+        {% if l.photo %}<img src="{{ l.photo.url }}" alt="{{ l.name }}" class="rounded-circle mb-3" width="120" height="120" style="object-fit:cover">{% else %}<span class="avatar avatar-lg mx-auto mb-3" style="width:96px;height:96px;font-size:1.8rem">{{ l.name|slice:":1" }}</span>{% endif %}
+        <h3 class="h6 fw-bold mb-1">{{ l.name }}</h3><div class="small text-primary fw-semibold">{{ l.position }}</div>{% if l.bio %}<p class="small text-muted mt-2 mb-0">{{ l.bio|truncatewords:30 }}</p>{% endif %}
+      </div></div>{% endfor %}</div>
+    {% else %}<div class="panel" style="max-width:560px;margin:0 auto">{% include "components/empty.html" with icon="bi-people" title="Leadership profiles coming soon" text="Profiles of the College management will be published here." %}</div>{% endif %}
+  </div>
+</section>
+{% endblock %}

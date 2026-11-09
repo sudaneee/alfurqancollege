@@ -1,0 +1,26 @@
+{% extends "website/base.html" %}
+{% block title %}Contact · {{ site.college_name }}{% endblock %}
+{% block content %}
+{% include "website/page_hero.html" with heading="Contact us" lead="We are happy to answer questions about admissions, programmes and fees." %}
+<section class="section">
+  <div class="container"><div class="row g-5">
+    <div class="col-lg-5">
+      <div class="d-grid gap-3">
+        <div class="feature"><div class="feature-icon"><i class="bi bi-geo-alt"></i></div><div><h4>Address</h4><p>{{ site.address|default:"Will be published soon."|linebreaksbr }}</p></div></div>
+        <div class="feature"><div class="feature-icon"><i class="bi bi-telephone"></i></div><div><h4>Telephone</h4><p>{% if site.phone %}<a href="tel:{{ site.phone }}">{{ site.phone }}</a>{% if site.phone_alt %}<br><a href="tel:{{ site.phone_alt }}">{{ site.phone_alt }}</a>{% endif %}{% else %}Will be published soon.{% endif %}</p></div></div>
+        <div class="feature"><div class="feature-icon"><i class="bi bi-envelope"></i></div><div><h4>E-mail</h4><p>{% if site.email %}<a href="mailto:{{ site.email }}">{{ site.email }}</a>{% else %}Use the form on this page.{% endif %}</p></div></div>
+        {% if site.office_hours %}<div class="feature"><div class="feature-icon"><i class="bi bi-clock"></i></div><div><h4>Office hours</h4><p>{{ site.office_hours }}</p></div></div>{% endif %}
+      </div>
+      {% if site.map_embed_url %}<div class="ratio ratio-4x3 mt-4 rounded-4 overflow-hidden border"><iframe src="{{ site.map_embed_url }}" title="Map to {{ site.short_name }}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="border:0"></iframe></div>{% endif %}
+    </div>
+    <div class="col-lg-7">
+      <div class="panel p-4"><h2 class="h4 fw-bold mb-1">Send a message</h2><p class="text-muted small mb-4">Fields marked * are required.</p>
+        <form method="post" class="needs-validation" novalidate>{% csrf_token %}
+          <div class="d-none" aria-hidden="true">{{ form.website }}</div>
+          {% for f in form %}{% if f.name != 'website' %}<div class="mb-3"><label class="form-label" for="{{ f.id_for_label }}">{{ f.label }}{% if f.field.required %}<span class="req">*</span>{% endif %}</label>{{ f }}{% for e in f.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}</div>{% endif %}{% endfor %}
+          <button class="btn btn-primary btn-lg"><i class="bi bi-send me-1"></i>Send message</button>
+        </form></div>
+    </div>
+  </div></div>
+</section>
+{% endblock %}

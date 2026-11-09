@@ -1,0 +1,18 @@
+{% extends "portal/base.html" %}
+{% block portal_name %}Application Portal{% endblock %}
+{% block home_url %}{% url 'admissions:portal_dashboard' %}{% endblock %}
+{% block role_label %}Applicant{% endblock %}
+{% block nav %}
+{% with u=request.resolver_match.url_name %}
+<a class="side-link {% if u == 'portal_dashboard' %}active{% endif %}" href="{% url 'admissions:portal_dashboard' %}"><i class="bi bi-house"></i>My application</a>
+<div class="nav-group-label">Application form</div>
+<a class="side-link {% if u == 'portal_form' %}active{% endif %}" href="{% url 'admissions:portal_form' %}"><i class="bi bi-person"></i>Biodata &amp; programme</a>
+<a class="side-link {% if u == 'portal_olevels' %}active{% endif %}" href="{% url 'admissions:portal_olevels' %}"><i class="bi bi-journal-text"></i>O'Level results</a>
+<a class="side-link {% if u == 'portal_documents' %}active{% endif %}" href="{% url 'admissions:portal_documents' %}"><i class="bi bi-folder2"></i>Documents</a>
+<a class="side-link" href="{% url 'admissions:portal_pay' %}"><i class="bi bi-credit-card"></i>Application fee</a>
+<div class="nav-group-label">Help</div>
+<a class="side-link" href="{% url 'website:admissions' %}" target="_blank"><i class="bi bi-info-circle"></i>Admission requirements</a>
+<a class="side-link {% if u == 'list' %}active{% endif %}" href="{% url 'notifications:list' %}"><i class="bi bi-bell"></i>Notifications{% if unread_notifications %}<span class="count">{{ unread_notifications }}</span>{% endif %}</a>
+{% if request.user.student %}<div class="nav-group-label">Student</div><a class="side-link" href="{% url 'students:portal_dashboard' %}"><i class="bi bi-mortarboard"></i>Go to Student Portal</a>{% endif %}
+{% endwith %}
+{% endblock %}

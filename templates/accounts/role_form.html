@@ -1,0 +1,27 @@
+{% extends "staff/base.html" %}
+{% block page_title %}{% if object %}{{ object.name }}{% else %}New role{% endif %}{% endblock %}
+{% block content %}
+<div class="page-header"><div><div class="crumbs"><a href="{% url 'accounts:role_list' %}">Roles</a> / {% if object %}Edit{% else %}New{% endif %}</div><h1>{% if object %}{{ object.name }}{% else %}New role{% endif %}</h1><p class="sub">Tick the permissions this role should have. Changes take effect immediately for all users with the role.</p></div></div>
+<form method="post">
+  {% csrf_token %}
+  <div class="panel mb-3"><div class="panel-body"><div class="row g-3">
+    <div class="col-md-6"><label class="form-label" for="{{ form.name.id_for_label }}">Role name<span class="req">*</span></label>{{ form.name }}{% for e in form.name.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}</div>
+    <div class="col-md-6"><label class="form-label" for="{{ form.dashboard.id_for_label }}">Dashboard style</label>{{ form.dashboard }}</div>
+    <div class="col-12"><label class="form-label" for="{{ form.description.id_for_label }}">Description</label>{{ form.description }}</div>
+  </div></div></div>
+  <div class="row g-3">
+  {% for group, caps in form.capability_groups.items %}
+    <div class="col-md-6 col-xl-4">
+      <div class="panel h-100">
+        <div class="panel-header"><h2 class="panel-title">{{ group }}</h2>
+          <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="all-{{ forloop.counter }}" onchange="this.closest('.panel').querySelectorAll('input[name=caps]').forEach(c=>c.checked=this.checked)"><label class="form-check-label small" for="all-{{ forloop.counter }}">All</label></div></div>
+        <div class="panel-body">
+          {% for c in caps %}<div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="caps" value="{{ c.code }}" id="cap-{{ c.code }}" {% if c.checked %}checked{% endif %}><label class="form-check-label" for="cap-{{ c.code }}">{{ c.label }}</label></div>{% endfor %}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+  </div>
+  <div class="mt-3 d-flex gap-2"><button class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Save role</button><a href="{% url 'accounts:role_list' %}" class="btn btn-ghost">Cancel</a></div>
+</form>
+{% endblock %}

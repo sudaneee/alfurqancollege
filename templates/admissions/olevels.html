@@ -1,0 +1,31 @@
+{% extends base_template %}
+{% block page_title %}O'Level results{% endblock %}
+{% block content %}
+<div class="page-header"><div>
+  {% if staff %}<div class="crumbs"><a href="{% url 'admissions:staff_list' %}">Admissions</a> / <a href="{{ back_url }}">{{ app.application_number|default:"Draft" }}</a></div>{% endif %}
+  <h1>O'Level results</h1>
+  <p class="sub">Enter at least five subjects including English Language and Mathematics, from not more than two sittings.{% if staff %} Editing on behalf of <strong>{{ app.display_name }}</strong>.{% endif %}</p>
+</div></div>
+<form method="post">{% csrf_token %}
+  {{ formset.management_form }}
+  {% if formset.non_form_errors %}<div class="alert alert-danger">{{ formset.non_form_errors }}</div>{% endif %}
+  <div class="panel mb-3"><div class="table-wrap"><table class="table table-compact table-stack align-middle">
+    <thead><tr><th>Sitting</th><th>Exam</th><th>Year</th><th>Exam number</th><th>Subject</th><th>Grade</th><th>Remove</th></tr></thead>
+    <tbody>{% for f in formset %}
+      <tr>{% for h in f.hidden_fields %}{{ h }}{% endfor %}
+        <td data-label="Sitting">{{ f.sitting }}</td><td data-label="Exam">{{ f.exam_type }}</td><td data-label="Year" style="min-width:90px">{{ f.exam_year }}</td>
+        <td data-label="Exam number">{{ f.exam_number }}</td><td data-label="Subject" style="min-width:170px">{{ f.subject }}</td><td data-label="Grade" style="min-width:80px">{{ f.grade }}</td>
+        <td data-label="Remove">{% if f.instance.pk %}{{ f.DELETE }}{% endif %}</td></tr>
+      {% if f.errors %}<tr><td colspan="7" class="text-danger small">{% for k, errs in f.errors.items %}{% for e in errs %}{{ e }} {% endfor %}{% endfor %}</td></tr>{% endif %}
+    {% endfor %}</tbody>
+  </table></div>
+  <div class="panel-footer small text-muted">Leave unused rows empty. Save to get more rows.</div></div>
+  <div class="d-flex gap-2"><button class="btn btn-primary">{% if staff %}Save{% else %}Save &amp; continue <i class="bi bi-arrow-right ms-1"></i>{% endif %}</button><a class="btn btn-ghost" href="{{ back_url }}">Back</a></div>
+</form>
+{% endblock %}
+{% block extra_js %}
+<script>
+// Rows left completely empty are ignored by the server; make sure fields in empty rows are not "required" in the browser.
+document.querySelectorAll("tbody tr").forEach(function(tr){ tr.querySelectorAll("[required]").forEach(function(i){ i.removeAttribute("required"); }); });
+</script>
+{% endblock %}

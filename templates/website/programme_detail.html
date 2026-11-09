@@ -1,0 +1,58 @@
+{% extends "website/base.html" %}
+{% load core_tags %}
+{% block title %}{{ p.name }} · {{ site.college_name }}{% endblock %}
+{% block meta_description %}{{ p.award_title }} at {{ site.college_name }}. {{ p.summary|truncatewords:30 }}{% endblock %}
+{% block content %}
+{% url 'website:programmes' as plist %}
+{% include "website/page_hero.html" with heading=p.name lead=p.award_title parent_url=plist parent_label="Programmes" crumb=p.name %}
+<section class="section">
+  <div class="container">
+    <div class="row g-5">
+      <div class="col-lg-8">
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-md-3"><div class="panel stat"><div><div class="stat-label">Duration</div><div class="stat-value fs-5">{{ p.duration_years }} years</div></div></div></div>
+          <div class="col-6 col-md-3"><div class="panel stat"><div><div class="stat-label">Semesters</div><div class="stat-value fs-5">{{ p.total_semesters }}</div></div></div></div>
+          <div class="col-6 col-md-3"><div class="panel stat"><div><div class="stat-label">Department</div><div class="stat-value fs-6 mt-1">{{ p.department }}</div></div></div></div>
+          <div class="col-6 col-md-3"><div class="panel stat"><div><div class="stat-label">Assessment</div><div class="stat-value fs-6 mt-1">CA {{ p.ca_max_score|floatformat:0 }}% · Exam {{ p.exam_max_score|floatformat:0 }}%</div></div></div></div>
+        </div>
+        <h2 class="h3 fw-bold">Overview</h2>
+        <div class="prose">{{ p.summary|linebreaks }}{% if p.goal %}<p><strong>Programme goal:</strong> {{ p.goal }}</p>{% endif %}</div>
+        {% if p.objectives %}
+        <h3 class="h5 fw-bold mt-4">What graduates can do</h3>
+        <ul class="check-list mb-4">{% for o in p.objectives|split_lines %}<li>{{ o }}</li>{% endfor %}</ul>
+        {% endif %}
+        {% if p.structure_notes %}<h3 class="h5 fw-bold mt-4">Programme structure</h3><div class="prose">{{ p.structure_notes|linebreaks }}</div>{% endif %}
+        {% if practicals %}<h3 class="h5 fw-bold mt-4">Practical training</h3>
+          <div class="row g-3 mb-4">{% for pr in practicals %}<div class="col-md-6"><div class="panel p-3 h-100"><div class="fw-semibold">{{ pr.title }}</div><div class="small text-muted mb-1">{{ pr.get_kind_display }}{% if pr.duration %} · {{ pr.duration }}{% endif %}</div>{% if pr.timing %}<div class="small">{{ pr.timing }}</div>{% endif %}</div></div>{% endfor %}</div>{% endif %}
+        {% if slots %}
+        <h2 class="h3 fw-bold mt-5 mb-3">Curriculum</h2>
+        <div class="accordion" id="curr">
+          {% for slot in slots %}
+          <div class="accordion-item"><h3 class="accordion-header"><button class="accordion-button {% if not forloop.first %}collapsed{% endif %} fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#s{{ forloop.counter }}">{{ slot.label }} <span class="tag ms-2">{{ slot.units }} units</span></button></h3>
+            <div id="s{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#curr"><div class="table-wrap"><table class="table table-compact curriculum-table mb-0">
+              <thead><tr><th>Code</th><th>Course title</th><th class="num">Units</th></tr></thead>
+              <tbody>{% for c in slot.courses %}<tr><td class="fw-semibold text-nowrap">{{ c.code }}</td><td>{{ c.title }}</td><td class="num">{{ c.credit_units }}</td></tr>{% endfor %}</tbody></table></div></div></div>
+          {% endfor %}
+        </div>
+        <p class="small text-muted mt-2">Source: {{ p.curriculum_reference }}</p>
+        {% endif %}
+      </div>
+      <aside class="col-lg-4">
+        <div class="panel p-4 mb-3 position-sticky" style="top:100px">
+          <h2 class="h5 fw-bold">Entry requirements</h2>
+          <ul class="check-list small mb-4">{% for r in p.entry_requirements|split_lines %}<li>{{ r }}</li>{% endfor %}</ul>
+          {% if p.award_conditions %}<h3 class="h6 fw-bold">Award of the diploma</h3><ul class="small text-muted ps-3 mb-4">{% for r in p.award_conditions|split_lines %}<li>{{ r }}</li>{% endfor %}</ul>{% endif %}
+          <a href="{% url 'admissions:portal_dashboard' %}" class="btn btn-primary w-100 mb-2">{% if period %}Apply now{% else %}Create applicant account{% endif %}</a>
+          <a href="{% url 'website:admissions' %}" class="btn btn-light w-100">Admission information</a>
+          {% if p.regulatory_body %}<p class="small text-muted mt-3 mb-0"><i class="bi bi-patch-check me-1"></i>Curriculum: {{ p.regulatory_body }}</p>{% endif %}
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+{% if others %}
+<section class="section section-alt pt-5"><div class="container"><h2 class="h4 fw-bold mb-4">Other programmes</h2><div class="row g-3">
+  {% for o in others %}<div class="col-md-4"><a class="programme-card" href="{% url 'website:programme_detail' o.slug %}"><div class="pc-top pb-3"><h3>{{ o.name }}</h3><p class="mb-0 small">{{ o.award_title }}</p></div></a></div>{% endfor %}
+</div></div></section>
+{% endif %}
+{% endblock %}

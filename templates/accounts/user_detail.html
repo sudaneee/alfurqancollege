@@ -1,0 +1,50 @@
+{% extends "staff/base.html" %}
+{% load core_tags humanize %}
+{% block page_title %}{{ obj }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="d-flex align-items-center gap-3">
+    <span class="avatar avatar-lg">{{ obj|initials }}</span>
+    <div><div class="crumbs"><a href="{% url 'accounts:user_list' %}?type={{ obj.user_type }}">Users</a></div><h1>{{ obj.get_full_name|default:obj.username }}</h1>
+      <p class="sub">{{ obj.get_user_type_display }} · {% if obj.is_active %}{% status_badge 'active' %}{% else %}{% status_badge 'suspended' 'Deactivated' %}{% endif %}{% if obj.is_sample %} <span class="tag tag-sample">Sample record</span>{% endif %}</p></div>
+  </div>
+  <div class="page-actions">
+    {% if obj.user_type == 'staff' %}<a class="btn btn-light" href="{% url 'accounts:user_edit' obj.pk %}"><i class="bi bi-pencil me-1"></i>Edit</a>{% endif %}
+    {% if obj.user_type == 'student' %}<a class="btn btn-light" href="{% url 'students:detail' obj.student.pk %}">Student record</a>{% endif %}
+    <form method="post" action="{% url 'accounts:user_toggle' obj.pk %}" data-confirm="{% if obj.is_active %}Deactivate this account? The user will no longer be able to sign in.{% else %}Re-activate this account?{% endif %}">{% csrf_token %}
+      <button class="btn {% if obj.is_active %}btn-outline-danger{% else %}btn-success{% endif %}">{% if obj.is_active %}<i class="bi bi-slash-circle me-1"></i>Deactivate{% else %}<i class="bi bi-check-circle me-1"></i>Activate{% endif %}</button></form>
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Account</h2></div><div class="panel-body">
+      <dl class="kv">
+        <dt>Username</dt><dd>{{ obj.username }}</dd>
+        <dt>E-mail</dt><dd>{{ obj.email|default:"—" }}</dd>
+        <dt>Phone</dt><dd>{{ obj.phone|default:"—" }}</dd>
+        {% if obj.staff_profile %}<dt>Staff ID</dt><dd>{{ obj.staff_profile.staff_id }}</dd><dt>Department</dt><dd>{{ obj.staff_profile.department|default:"—" }}</dd><dt>Designation</dt><dd>{{ obj.staff_profile.designation|default:"—" }}</dd>{% endif %}
+        <dt>Roles</dt><dd>{% for r in obj.role_names %}<span class="tag me-1">{{ r }}</span>{% empty %}—{% endfor %}</dd>
+        <dt>Last sign-in</dt><dd>{{ obj.last_login|date:"d M Y H:i"|default:"Never" }}</dd>
+        <dt>Joined</dt><dd>{{ obj.date_joined|date:"d M Y" }}</dd>
+      </dl>
+    </div></div>
+    <div class="panel"><div class="panel-header"><h2 class="panel-title">Reset password</h2></div>
+      <form method="post" action="{% url 'accounts:user_reset_password' obj.pk %}" class="panel-body" data-confirm="Reset this user's password?">{% csrf_token %}
+        {% include "components/form_fields.html" with form=reset_form cols="col-12" %}
+        <button class="btn btn-light mt-3"><i class="bi bi-key me-1"></i>Reset password</button>
+      </form></div>
+  </div>
+  <div class="col-lg-6">
+    {% if obj.user_type == 'staff' %}
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Effective permissions</h2></div><div class="panel-body">
+      {% if obj.is_superuser %}<p class="mb-0">Full access to every module (Super Administrator).</p>{% else %}
+      {% for p in perms %}<span class="tag me-1 mb-1">{{ p|nice }}</span>{% empty %}<p class="text-muted mb-0">No permissions. Assign a role.</p>{% endfor %}{% endif %}
+    </div></div>
+    {% endif %}
+    <div class="panel"><div class="panel-header"><h2 class="panel-title">Recent activity</h2></div><div class="panel-body">
+      {% if activity %}<ul class="timeline">{% for e in activity %}<li><div><strong>{{ e.actor|default:"System" }}</strong> {{ e.action }} <span class="text-muted">{{ e.object_repr|truncatechars:50 }}</span></div><div class="t-time">{{ e.timestamp|naturaltime }}</div></li>{% endfor %}</ul>
+      {% else %}<p class="text-muted mb-0">No activity yet.</p>{% endif %}
+    </div></div>
+  </div>
+</div>
+{% endblock %}

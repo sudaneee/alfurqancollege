@@ -1,0 +1,144 @@
+{% extends "staff/base.html" %}
+{% load core_tags humanize %}
+{% block page_title %}{{ s.display_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="d-flex align-items-center gap-3">
+    <span class="avatar avatar-lg">{% if s.photo %}<img src="{{ s.photo.url }}" alt="">{% else %}{{ s.first_name|first }}{{ s.last_name|first }}{% endif %}</span>
+    <div><div class="crumbs"><a href="{% url 'students:list' %}">Students</a></div>
+      <h1>{{ s.full_name }}</h1>
+      <p class="sub"><strong>{{ s.matric_number }}</strong> · {{ s.programme.name }} · {{ s.level_label }}, {{ s.get_current_term_display }} semester · {% status_badge s.status.code s.status.name %}{% if s.is_sample %} <span class="tag tag-sample">Sample record</span>{% endif %}</p></div>
+  </div>
+  <div class="page-actions">
+    {% can 'manage_students' as ms %}{% if ms %}<a class="btn btn-light" href="{% url 'students:edit' s.pk %}"><i class="bi bi-pencil me-1"></i>Edit</a>{% endif %}
+    <div class="dropdown">
+      <button class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-person-gear me-1"></i>Act on behalf</button>
+      <ul class="dropdown-menu dropdown-menu-end shadow">
+        {% can 'manage_registrations' as mr %}{% if mr %}<li><a class="dropdown-item" href="{% url 'registration:staff_student' s.pk %}"><i class="bi bi-journal-plus me-2"></i>Register / add / drop courses</a></li>{% endif %}
+        {% can 'view_finance' as vf %}{% if vf %}<li><a class="dropdown-item" href="?tab=finance"><i class="bi bi-cash-coin me-2"></i>Fees &amp; record payment</a></li>{% endif %}
+        {% if ms %}<li><a class="dropdown-item" href="?tab=documents"><i class="bi bi-upload me-2"></i>Upload documents</a></li>
+        <li><a class="dropdown-item" href="{% url 'students:edit' s.pk %}"><i class="bi bi-person-lines-fill me-2"></i>Update biodata</a></li>{% endif %}
+        {% can 'generate_transcripts' as gt %}{% if gt %}<li><a class="dropdown-item" href="{% url 'results:transcript' s.pk %}" target="_blank"><i class="bi bi-file-earmark-text me-2"></i>Transcript (PDF)</a></li>{% endif %}
+        {% can 'manage_users' as mu %}{% if mu %}<li><hr class="dropdown-divider"></li><li><a class="dropdown-item" href="{% url 'accounts:user_detail' s.user_id %}"><i class="bi bi-key me-2"></i>Portal login &amp; password</a></li>{% endif %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="tabs-line">
+  <a href="?tab=profile" class="{% if tab == 'profile' %}active{% endif %}">Profile</a>
+  <a href="?tab=academic" class="{% if tab == 'academic' %}active{% endif %}">Courses &amp; results</a>
+  {% can 'view_finance' as vf2 %}{% if vf2 %}<a href="?tab=finance" class="{% if tab == 'finance' %}active{% endif %}">Finance</a>{% endif %}
+  <a href="?tab=documents" class="{% if tab == 'documents' %}active{% endif %}">Documents ({{ documents|length }})</a>
+  <a href="?tab=history" class="{% if tab == 'history' %}active{% endif %}">History</a>
+</div>
+
+{% if tab == 'profile' %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Personal information</h2></div><div class="panel-body">
+      <dl class="kv">
+        <dt>Full name</dt><dd>{{ s.full_name }}</dd>
+        <dt>Gender</dt><dd>{{ s.get_gender_display|default:"—" }}</dd>
+        <dt>Date of birth</dt><dd>{{ s.date_of_birth|date:"d F Y"|default:"—" }}</dd>
+        <dt>State / LGA</dt><dd>{{ s.state_of_origin|default:"—" }}{% if s.lga %} / {{ s.lga }}{% endif %}</dd>
+        <dt>Nationality</dt><dd>{{ s.nationality|default:"—" }}</dd>
+        <dt>Phone</dt><dd>{{ s.phone|default:"—" }}</dd>
+        <dt>E-mail</dt><dd>{{ s.email|default:"—" }}</dd>
+        <dt>Address</dt><dd>{{ s.address|default:"—"|linebreaksbr }}</dd>
+      </dl>
+    </div></div>
+    <div class="row g-3">
+      <div class="col-md-6"><div class="panel h-100"><div class="panel-header"><h2 class="panel-title">Next of kin</h2></div><div class="panel-body"><dl class="kv">
+        <dt>Name</dt><dd>{{ s.next_of_kin_name|default:"—" }}</dd><dt>Relationship</dt><dd>{{ s.next_of_kin_relationship|default:"—" }}</dd>
+        <dt>Phone</dt><dd>{{ s.next_of_kin_phone|default:"—" }}</dd><dt>Address</dt><dd>{{ s.next_of_kin_address|default:"—" }}</dd></dl></div></div></div>
+      <div class="col-md-6"><div class="panel h-100"><div class="panel-header"><h2 class="panel-title">Parent / guardian</h2></div><div class="panel-body"><dl class="kv">
+        <dt>Name</dt><dd>{{ s.guardian_name|default:"—" }}</dd><dt>Phone</dt><dd>{{ s.guardian_phone|default:"—" }}</dd><dt>Address</dt><dd>{{ s.guardian_address|default:"—" }}</dd></dl></div></div></div>
+    </div>
+    {% if s.previous_education %}<div class="panel mt-3"><div class="panel-header"><h2 class="panel-title">Previous qualifications</h2></div><div class="panel-body small">{{ s.previous_education|linebreaksbr }}</div></div>{% endif %}
+  </div>
+  <div class="col-lg-4">
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Academic</h2></div><div class="panel-body"><dl class="kv">
+      <dt>Programme</dt><dd>{{ s.programme.name }}</dd><dt>Department</dt><dd>{{ s.department }}</dd>
+      <dt>Level</dt><dd>{{ s.level_label }}</dd><dt>Admitted</dt><dd>{{ s.entry_session.name }}</dd>
+      <dt>CGPA</dt><dd>{% if cgpa is not None %}<strong>{{ cgpa }}</strong> <span class="text-muted small">{{ s.programme.grading_scheme|default:"" }}</span>{% else %}—{% endif %}</dd>
+      {% if s.application %}<dt>Application</dt><dd><a href="{% url 'admissions:staff_detail' s.application_id %}">{{ s.application.application_number }}</a></dd>{% endif %}
+    </dl></div></div>
+    {% can 'change_student_status' as ccs %}{% if ccs %}
+    <div class="panel"><div class="panel-header"><h2 class="panel-title">Change status</h2></div>
+      <form method="post" action="{% url 'students:status' s.pk %}" class="panel-body" data-confirm="Change this student's status?">{% csrf_token %}
+        {% include "components/form_fields.html" with form=status_form cols="col-12" %}
+        <button class="btn btn-light mt-3 w-100">Update status</button></form></div>
+    {% endif %}
+  </div>
+</div>
+
+{% elif tab == 'academic' %}
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="panel"><div class="panel-header"><h2 class="panel-title">Course registrations</h2>{% can 'manage_registrations' as mr2 %}{% if mr2 %}<a href="{% url 'registration:staff_student' s.pk %}" class="btn btn-primary btn-sm">Register courses</a>{% endif %}</div>
+      {% for r in registrations %}
+      <div class="px-3 py-2 border-bottom"><div class="d-flex justify-content-between align-items-center"><a class="cell-title" href="{% url 'registration:staff_student' s.pk %}?semester={{ r.semester_id }}">{{ r.semester }}</a>{% status_badge r.status r.get_status_display %}</div>
+        <div class="cell-sub">{{ r.items.count }} course{{ r.items.count|pluralize }} · {{ r.total_units }} units</div></div>
+      {% empty %}{% include "components/empty.html" with icon="bi-journal" title="No registrations yet" %}{% endfor %}
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="panel"><div class="panel-header"><h2 class="panel-title">Published results</h2>{% if record.cgpa is not None %}<span class="tag">CGPA {{ record.cgpa }} · {{ record.classification }}</span>{% endif %}
+      {% can 'generate_transcripts' as gt2 %}{% if gt2 and record.semesters %}<a class="btn btn-light btn-sm" target="_blank" href="{% url 'results:transcript' s.pk %}">Transcript</a>{% endif %}</div>
+      {% for sem in record.semesters %}
+      <div class="px-3 pt-3"><div class="d-flex justify-content-between"><strong class="small">{{ sem.semester }}</strong><span class="small text-muted">GPA {{ sem.gpa|default:"—" }} · CGPA {{ sem.cgpa|default:"—" }}</span></div></div>
+      <div class="table-wrap"><table class="table table-compact"><tbody>{% for sc in sem.scores %}<tr><td class="fw-semibold">{{ sc.sheet.course.code }}</td><td class="small">{{ sc.sheet.course.title }}</td><td class="num">{{ sc.credit_units }}</td><td class="num">{{ sc.total|floatformat:0 }}</td><td class="fw-semibold {% if not sc.passed %}text-danger{% endif %}">{{ sc.grade }}</td></tr>{% endfor %}</tbody></table></div>
+      {% empty %}{% include "components/empty.html" with icon="bi-clipboard-data" title="No published results" %}{% endfor %}
+    </div>
+  </div>
+</div>
+
+{% elif tab == 'finance' %}
+<div class="row g-3 mb-3">
+  <div class="col-md-4"><div class="panel stat"><div class="stat-icon"><i class="bi bi-receipt"></i></div><div><div class="stat-label">Total billed (net)</div><div class="stat-value">{{ fin.total|naira }}</div></div></div></div>
+  <div class="col-md-4"><div class="panel stat"><div class="stat-icon green"><i class="bi bi-check2-circle"></i></div><div><div class="stat-label">Paid</div><div class="stat-value">{{ fin.paid|naira }}</div></div></div></div>
+  <div class="col-md-4"><div class="panel stat"><div class="stat-icon red"><i class="bi bi-exclamation-circle"></i></div><div><div class="stat-label">Outstanding</div><div class="stat-value">{{ fin.balance|naira }}</div></div></div></div>
+</div>
+<div class="panel"><div class="panel-header"><h2 class="panel-title">Invoices</h2>{% can 'record_payments' as rp %}{% if rp %}<a class="btn btn-primary btn-sm" href="{% url 'bursary:generate_invoices' %}?student={{ s.pk }}">Generate invoice</a>{% endif %}</div>
+  {% if fin.invoices %}<div class="table-wrap"><table class="table table-hover table-stack"><thead><tr><th>Invoice</th><th>Description</th><th class="num">Amount</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th><th></th></tr></thead><tbody>
+  {% for i in fin.invoices %}<tr><td data-label="Invoice" class="fw-semibold">{{ i.number }}</td><td data-label="Description" class="small">{{ i.description }}</td><td data-label="Amount" class="num">{{ i.net_amount|naira }}</td><td data-label="Paid" class="num">{{ i.amount_paid|naira }}</td><td data-label="Balance" class="num fw-semibold">{{ i.balance|naira }}</td><td data-label="Status">{% status_badge i.status i.get_status_display %}</td><td class="text-end"><a class="btn btn-light btn-sm" href="{% url 'bursary:invoice_detail' i.pk %}">Open</a></td></tr>{% endfor %}
+  </tbody></table></div>{% else %}{% include "components/empty.html" with icon="bi-receipt" title="No invoices" text="Generate the session invoice from the fee schedule." %}{% endif %}
+</div>
+
+{% elif tab == 'documents' %}
+<div class="row g-3">
+  <div class="col-lg-8"><div class="panel"><div class="panel-header"><h2 class="panel-title">Documents</h2></div>
+    {% if documents %}<div class="table-wrap"><table class="table table-stack"><thead><tr><th>Document</th><th>Uploaded</th><th>By</th><th>Verified</th><th></th></tr></thead><tbody>
+    {% for d in documents %}<tr><td data-label="Document"><a href="{{ d.file.url }}" target="_blank" class="cell-title">{{ d.document_type }}</a></td><td data-label="Uploaded" class="small">{{ d.uploaded_at|date:"d M Y" }}</td>
+      <td data-label="By" class="small">{{ d.uploaded_by|default:"—" }}{% if d.via_staff %} <span class="tag">staff</span>{% endif %}</td>
+      <td data-label="Verified">{% if d.is_verified %}{% status_badge 'verified' %}{% else %}{% status_badge 'pending' 'Unverified' %}{% endif %}</td>
+      <td class="text-end">{% if not d.is_verified and ms %}<form method="post" action="{% url 'students:document_verify' s.pk d.pk %}">{% csrf_token %}<button class="btn btn-light btn-sm">Verify</button></form>{% endif %}</td></tr>{% endfor %}
+    </tbody></table></div>{% else %}{% include "components/empty.html" with icon="bi-folder2-open" title="No documents uploaded" %}{% endif %}
+  </div></div>
+  {% if ms %}<div class="col-lg-4"><div class="panel"><div class="panel-header"><h2 class="panel-title">Upload on behalf</h2></div>
+    <form method="post" enctype="multipart/form-data" action="{% url 'students:document_upload' s.pk %}" class="panel-body">{% csrf_token %}
+      {% include "components/form_fields.html" with form=doc_form cols="col-12" %}<div class="form-text">PDF, JPG or PNG · max {{ site.max_document_size_mb }} MB</div>
+      <button class="btn btn-primary mt-3 w-100"><i class="bi bi-upload me-1"></i>Upload</button></form></div></div>{% endif %}
+</div>
+
+{% elif tab == 'history' %}
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">Status &amp; level history</h2></div><div class="panel-body">
+      <ul class="timeline">
+      {% for h in status_history %}<li><div>Status <strong>{{ h.from_status|default:"—" }} → {{ h.to_status }}</strong>{% if h.reason %} — {{ h.reason }}{% endif %}</div><div class="t-time">{{ h.changed_at|date:"d M Y H:i" }} · {{ h.changed_by|default:"System" }}</div></li>{% endfor %}
+      {% for h in academic_history %}<li><div>{{ h.get_event_display }}{% if h.from_year %} from Year {{ h.from_year }}{% endif %}{% if h.to_year %} to Year {{ h.to_year }}{% endif %} ({{ h.session }}){% if h.note %} — {{ h.note }}{% endif %}</div><div class="t-time">{{ h.recorded_at|date:"d M Y H:i" }} · {{ h.recorded_by|default:"System" }}</div></li>{% endfor %}
+      </ul>
+    </div></div>
+    {% if app_events %}<div class="panel"><div class="panel-header"><h2 class="panel-title">Application history (preserved)</h2></div><div class="panel-body"><ul class="timeline">
+      {% for e in app_events %}<li><div>{{ e.action }}{% if e.via_staff %} <span class="tag">by staff</span>{% endif %}{% if e.note %} — <span class="text-muted">{{ e.note }}</span>{% endif %}</div><div class="t-time">{{ e.created_at|date:"d M Y H:i" }} · {{ e.actor|default:"—" }}</div></li>{% endfor %}
+    </ul></div></div>{% endif %}
+  </div>
+  <div class="col-lg-6"><div class="panel"><div class="panel-header"><h2 class="panel-title">Audit trail</h2></div><div class="panel-body">
+    {% if audit %}<ul class="timeline">{% for e in audit %}<li><div><strong>{{ e.actor|default:"System" }}</strong> {{ e.action|nice }}{% if e.via_staff %} <span class="tag">on behalf</span>{% endif %} <span class="text-muted">{{ e.object_repr|truncatechars:50 }}</span></div><div class="t-time">{{ e.timestamp|date:"d M Y H:i" }}</div></li>{% endfor %}</ul>
+    {% else %}<p class="text-muted mb-0">No audit entries.</p>{% endif %}
+  </div></div></div>
+</div>
+{% endif %}
+{% endblock %}

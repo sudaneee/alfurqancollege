@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}500 · {{ site.short_name }}{% endblock %}
+{% block body %}
+<main class="d-flex align-items-center justify-content-center text-center" style="min-height:100vh;padding:2rem;background:var(--canvas)">
+  <div style="max-width:520px">
+    <img src="{{ site_logo }}" alt="" width="84" height="84" class="rounded-circle mb-4 bg-white">
+    <div class="small-caps mb-2">Error 500</div>
+    <h1 class="mb-3">Something went wrong</h1>
+    <p class="text-muted mb-4">An unexpected error occurred. The problem has been logged. Please try again shortly.</p>
+    <div class="d-flex gap-2 justify-content-center"><a href="javascript:history.back()" class="btn btn-light">Go back</a><a href="/" class="btn btn-primary">Home page</a></div>
+  </div>
+</main>
+{% endblock %}

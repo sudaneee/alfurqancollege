@@ -1,0 +1,54 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}Students{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Students</h1><p class="sub">Central student records. Every action here can also be done in bulk with Excel.</p></div>
+  <div class="page-actions">
+    {% can 'manage_students' 'change_student_status' 'promote_students' as cm %}
+    {% if cm %}
+    <div class="dropdown">
+      <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-file-earmark-spreadsheet me-1 text-success"></i>Bulk operations</button>
+      <ul class="dropdown-menu dropdown-menu-end shadow">
+        {% can 'manage_students' as ms %}{% if ms %}
+        <li><a class="dropdown-item" href="{% url 'core:bulk_home' 'students_create' %}"><i class="bi bi-person-plus me-2"></i>Import new students</a></li>
+        <li><a class="dropdown-item" href="{% url 'core:bulk_home' 'students_update' %}"><i class="bi bi-pencil-square me-2"></i>Bulk update records</a></li>{% endif %}
+        {% can 'change_student_status' as cs %}{% if cs %}<li><a class="dropdown-item" href="{% url 'core:bulk_home' 'students_status' %}"><i class="bi bi-toggles me-2"></i>Bulk status change</a></li>{% endif %}
+        {% can 'promote_students' as cp %}{% if cp %}<li><a class="dropdown-item" href="{% url 'students:promote' %}"><i class="bi bi-arrow-up-circle me-2"></i>Promote students</a></li>{% endif %}
+      </ul>
+    </div>
+    {% endif %}
+    <a class="btn btn-light" href="?{% query_replace export='xlsx' %}"><i class="bi bi-download me-1"></i>Export</a>
+    {% can 'manage_students' as ms2 %}{% if ms2 %}<a class="btn btn-primary" href="{% url 'students:create' %}"><i class="bi bi-plus-lg me-1"></i>New student</a>{% endif %}
+  </div>
+</div>
+<div class="panel">
+  <div class="panel-header">
+    <form class="filters" method="get">
+      <input type="search" name="q" value="{{ q }}" class="form-control search-input" placeholder="Name, matric no., phone…">
+      <select name="programme" class="form-select" onchange="this.form.submit()"><option value="">All programmes</option>{% for p in programmes %}<option value="{{ p.pk }}" {% if request.GET.programme == p.pk|stringformat:'s' %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select>
+      <select name="year" class="form-select" onchange="this.form.submit()"><option value="">All levels</option>{% for y in "123" %}<option value="{{ y }}" {% if request.GET.year == y %}selected{% endif %}>Year {{ y }}</option>{% endfor %}</select>
+      <select name="status" class="form-select" onchange="this.form.submit()"><option value="">All statuses</option>{% for s in statuses %}<option value="{{ s.code }}" {% if request.GET.status == s.code %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select>
+      <select name="session" class="form-select" onchange="this.form.submit()"><option value="">Any entry session</option>{% for s in sessions %}<option value="{{ s.pk }}" {% if request.GET.session == s.pk|stringformat:'s' %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select>
+      <button class="btn btn-light btn-sm">Search</button>
+      {% if request.GET %}<a href="{% url 'students:list' %}" class="btn btn-ghost btn-sm">Clear</a>{% endif %}
+    </form>
+    <span class="small text-muted">{{ page.paginator.count }} student{{ page.paginator.count|pluralize }}</span>
+  </div>
+  {% if page.object_list %}
+  <div class="table-wrap"><table class="table table-hover table-stack">
+    <thead><tr><th>Student</th><th>Matric number</th><th>Programme</th><th>Level</th><th>Status</th><th>Phone</th></tr></thead>
+    <tbody>{% for s in page %}
+      <tr>
+        <td data-label="Student"><div class="d-flex align-items-center gap-2"><span class="avatar">{% if s.photo %}<img src="{{ s.photo.url }}" alt="">{% else %}{{ s.first_name|first }}{{ s.last_name|first }}{% endif %}</span><div><a class="cell-title" href="{% url 'students:detail' s.pk %}">{{ s.full_name }}</a>{% if s.is_sample %} <span class="tag tag-sample">Sample</span>{% endif %}<div class="cell-sub">{{ s.get_gender_display }}</div></div></div></td>
+        <td data-label="Matric" class="fw-semibold text-nowrap">{{ s.matric_number }}</td>
+        <td data-label="Programme" class="small">{{ s.programme.name }}</td>
+        <td data-label="Level" class="small text-nowrap">{{ s.level_label }}</td>
+        <td data-label="Status">{% status_badge s.status.code s.status.name %}</td>
+        <td data-label="Phone" class="small">{{ s.phone|default:"—" }}</td>
+      </tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "components/pagination.html" %}
+  {% else %}{% url 'students:create' as new_url %}{% include "components/empty.html" with icon="bi-people" title="No students found" text="Adjust the filters, add a student, or import students from Excel." action_url=new_url action_label="New student" %}{% endif %}
+</div>
+{% endblock %}

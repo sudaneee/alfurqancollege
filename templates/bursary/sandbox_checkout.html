@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load core_tags %}
+{% block title %}Test checkout{% endblock %}
+{% block body %}
+<main class="d-flex align-items-center justify-content-center" style="min-height:100vh;background:var(--canvas);padding:1.5rem">
+  <div class="panel" style="max-width:440px;width:100%">
+    <div class="panel-body text-center">
+      <span class="tag tag-sample mb-3">SANDBOX — no real money</span>
+      <h1 class="h4 fw-bold mt-2">Test payment</h1>
+      <p class="text-muted small">This simulated checkout is only available in development. In production the payer is sent to Paystack or Flutterwave.</p>
+      <div class="display-6 fw-bold my-3">{{ payment.amount|naira }}</div>
+      <p class="small mb-4">{{ payment.invoice.description }}<br><span class="text-muted">{{ payment.reference }}</span></p>
+      <form method="post" class="d-grid gap-2">{% csrf_token %}
+        <button class="btn btn-success btn-lg" name="outcome" value="success">Simulate successful payment</button>
+        <button class="btn btn-outline-danger" name="outcome" value="failed">Simulate failed payment</button>
+      </form>
+    </div>
+  </div>
+</main>
+{% endblock %}

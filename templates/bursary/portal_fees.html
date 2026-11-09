@@ -1,0 +1,35 @@
+{% extends "students/portal/base.html" %}
+{% load core_tags %}
+{% block page_title %}Fees & payments{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Fees &amp; payments</h1><p class="sub">Pay online in full or in instalments. Every successful payment has a downloadable receipt.</p></div></div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="panel stat"><div class="stat-icon"><i class="bi bi-receipt"></i></div><div><div class="stat-label">Total fees</div><div class="stat-value">{{ fin.total|naira }}</div></div></div></div>
+  <div class="col-md-4"><div class="panel stat"><div class="stat-icon green"><i class="bi bi-check2-circle"></i></div><div><div class="stat-label">Paid</div><div class="stat-value">{{ fin.paid|naira }}</div></div></div></div>
+  <div class="col-md-4"><div class="panel stat"><div class="stat-icon {% if fin.balance %}red{% else %}green{% endif %}"><i class="bi bi-hourglass-split"></i></div><div><div class="stat-label">Outstanding</div><div class="stat-value">{{ fin.balance|naira }}</div></div></div></div>
+</div>
+<div class="panel mb-3"><div class="panel-header"><h2 class="panel-title">My invoices</h2></div>
+  {% if fin.invoices %}
+  <div class="table-wrap"><table class="table table-stack">
+    <thead><tr><th>Invoice</th><th class="num">Amount</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th><th></th></tr></thead>
+    <tbody>{% for i in fin.invoices %}<tr>
+      <td data-label="Invoice"><div class="cell-title">{{ i.description }}</div><div class="cell-sub">{{ i.number }}{% if i.due_date %} · due {{ i.due_date|date:"j M Y" }}{% endif %}{% if i.allow_instalments %} · instalments allowed{% endif %}</div></td>
+      <td data-label="Amount" class="num">{{ i.net_amount|naira }}</td><td data-label="Paid" class="num">{{ i.amount_paid|naira }}</td><td data-label="Balance" class="num fw-semibold">{{ i.balance|naira }}</td>
+      <td data-label="Status">{% status_badge i.status i.get_status_display %}</td>
+      <td class="text-end text-nowrap"><a class="btn btn-ghost btn-sm" href="{% url 'bursary:invoice_pdf' i.pk %}" target="_blank" aria-label="Invoice PDF"><i class="bi bi-file-earmark-pdf"></i></a>{% if i.balance > 0 %}<a class="btn btn-primary btn-sm" href="{% url 'bursary:pay_invoice' i.pk %}">Pay</a>{% endif %}</td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}{% include "components/empty.html" with icon="bi-receipt" title="No invoices yet" text="Your fees will appear here once the Bursary generates them." %}{% endif %}
+</div>
+<div class="row g-3">
+  <div class="col-lg-8"><div class="panel"><div class="panel-header"><h2 class="panel-title">Payment history</h2></div>
+    {% if payments %}<div class="table-wrap"><table class="table table-stack"><tbody>{% for p in payments %}<tr>
+      <td data-label="Date" class="small">{{ p.paid_at|default:p.created_at|date:"d M Y" }}</td>
+      <td data-label="Reference"><div class="fw-semibold small">{{ p.reference }}</div><div class="cell-sub">{{ p.get_method_display }}{% if p.via_staff %} · recorded by Bursary{% endif %}</div></td>
+      <td data-label="Amount" class="num fw-semibold">{{ p.amount|naira }}</td><td data-label="Status">{% status_badge p.status p.get_status_display %}</td>
+      <td class="text-end">{% if p.status == 'successful' %}<a class="btn btn-light btn-sm" href="{% url 'bursary:receipt' p.pk %}">Receipt</a>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+    {% else %}{% include "components/empty.html" with icon="bi-clock-history" title="No payments yet" %}{% endif %}
+  </div></div>
+  <div class="col-lg-4">{% if gateway.instructions %}<div class="panel"><div class="panel-header"><h2 class="panel-title">Paying at the bank?</h2></div><div class="panel-body small">{{ gateway.instructions|linebreaksbr }}<p class="mt-2 mb-0 text-muted">Bring your teller to the Bursary to have the payment recorded.</p></div></div>{% endif %}</div>
+</div>
+{% endblock %}

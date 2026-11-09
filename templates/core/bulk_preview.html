@@ -1,0 +1,71 @@
+{% extends "staff/base.html" %}
+{% load core_tags %}
+{% block page_title %}{{ importer.title }} — preview{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="crumbs"><a href="{% url 'core:bulk_home' importer.kind %}?{{ context_qs }}">{{ importer.title }}</a> / {{ batch.file_name }}</div>
+    <h1>{% if batch.status == 'preview' %}Review before saving{% else %}Import summary{% endif %}</h1>
+    <p class="sub">{{ batch.file_name }} · uploaded {{ batch.created_at|date:"d M Y H:i" }} by {{ batch.created_by }}</p>
+  </div>
+  <div class="page-actions">
+    {% if failed_count %}<a class="btn btn-light" href="{% url 'core:bulk_failed' batch.pk %}"><i class="bi bi-download me-1"></i>Download {{ failed_count }} failed row{{ failed_count|pluralize }}</a>{% endif %}
+    {% if batch.status == 'preview' %}
+      <form method="post" action="{% url 'core:bulk_cancel' batch.pk %}">{% csrf_token %}<button class="btn btn-ghost">Cancel</button></form>
+      <form method="post" action="{% url 'core:bulk_confirm' batch.pk %}" data-confirm="Apply {{ to_apply }} valid row(s)? Rows with errors will be skipped.">{% csrf_token %}
+        <button class="btn btn-primary" {% if not to_apply %}disabled{% endif %}><i class="bi bi-check2-circle me-1"></i>Confirm &amp; apply {{ to_apply }} row{{ to_apply|pluralize }}</button></form>
+    {% else %}
+      <a class="btn btn-primary" href="{% url importer.back_url_name %}">Done</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-md-3"><div class="panel stat"><div class="stat-icon"><i class="bi bi-list-ol"></i></div><div><div class="stat-label">Rows</div><div class="stat-value">{{ batch.rows|length }}</div></div></div></div>
+  {% if batch.status == 'preview' %}
+  <div class="col-6 col-md-3"><div class="panel stat"><div class="stat-icon green"><i class="bi bi-check2"></i></div><div><div class="stat-label">Ready</div><div class="stat-value">{{ to_apply }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="panel stat"><div class="stat-icon"><i class="bi bi-dash-circle"></i></div><div><div class="stat-label">No change</div><div class="stat-value">{{ skip_count }}</div></div></div></div>
+  {% else %}
+  <div class="col-6 col-md-3"><div class="panel stat"><div class="stat-icon green"><i class="bi bi-check2"></i></div><div><div class="stat-label">Applied</div><div class="stat-value">{{ batch.summary.applied }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="panel stat"><div class="stat-icon"><i class="bi bi-dash-circle"></i></div><div><div class="stat-label">Skipped</div><div class="stat-value">{{ batch.summary.skipped }}</div></div></div></div>
+  {% endif %}
+  <div class="col-6 col-md-3"><div class="panel stat"><div class="stat-icon red"><i class="bi bi-exclamation-triangle"></i></div><div><div class="stat-label">Errors</div><div class="stat-value">{{ failed_count }}</div></div></div></div>
+</div>
+
+{% if batch.status == 'preview' and failed_count %}
+<div class="alert alert-warning"><i class="bi bi-info-circle me-1"></i>Rows with errors will <strong>not</strong> be saved. You can apply the valid rows now and re-upload the corrected failed rows later, or fix the file and upload again.</div>
+{% endif %}
+
+<div class="panel">
+  <div class="panel-header">
+    <h2 class="panel-title">Rows</h2>
+    <div class="tabs-line mb-0 border-0">
+      <a href="?show=all" class="{% if show == 'all' %}active{% endif %}">All</a>
+      <a href="?show=errors" class="{% if show == 'errors' %}active{% endif %}">Errors ({{ failed_count }})</a>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="table table-compact">
+      <thead><tr><th>Row</th><th>Status</th>{% for c in importer.columns|slice:":4" %}<th>{{ c.label }}</th>{% endfor %}<th>Details</th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+        <tr class="{% if r.errors %}row-error{% elif r.action == 'skip' %}row-skip{% endif %}">
+          <td class="text-muted">{{ r.row }}</td>
+          <td>{% if r.errors %}{% status_badge 'failed' 'Error' %}{% elif r.result %}{% status_badge 'applied' r.action|title %}{% elif r.action == 'skip' %}{% status_badge 'none' 'No change' %}{% else %}{% status_badge 'pending' r.action|title %}{% endif %}</td>
+          {% for c in importer.columns|slice:":4" %}<td>{{ r.data|get_item:c.key }}</td>{% endfor %}
+          <td class="small">
+            {% for e in r.errors %}<div class="text-danger"><i class="bi bi-x-circle me-1"></i>{{ e }}</div>{% endfor %}
+            {% if not r.errors %}
+              {% for k, v in r.changes.items %}<div><span class="text-muted">{{ k }}:</span> {% if v.0 %}<del class="text-muted">{{ v.0 }}</del> → {% endif %}<strong>{{ v.1 }}</strong></div>{% endfor %}
+              {% if r.result %}<div class="text-success">{{ r.result }}</div>{% endif %}
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="8">{% include "components/empty.html" with title="No rows to show" icon="bi-check2-all" %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

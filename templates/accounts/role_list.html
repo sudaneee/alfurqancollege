@@ -1,0 +1,26 @@
+{% extends "staff/base.html" %}
+{% block page_title %}Roles & permissions{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="crumbs"><a href="{% url 'core:system' %}">System settings</a> / Roles</div><h1>Roles &amp; permissions</h1><p class="sub">Each role is a set of permissions. Change them at any time; users get the combined permissions of all their roles.</p></div>
+  <div class="page-actions"><a class="btn btn-primary" href="{% url 'accounts:role_create' %}"><i class="bi bi-plus-lg me-1"></i>New role</a></div>
+</div>
+<div class="row g-3">
+{% for r in roles %}
+  <div class="col-md-6 col-xl-4">
+    <div class="panel h-100 d-flex flex-column">
+      <div class="panel-body flex-grow-1">
+        <div class="d-flex justify-content-between align-items-start gap-2 mb-2"><h2 class="h6 fw-bold mb-0">{{ r.name }}</h2>{% if r.profile.is_system %}<span class="tag">Built-in</span>{% endif %}</div>
+        <p class="small text-muted mb-3">{{ r.profile.description|default:"No description." }}</p>
+        <div class="d-flex gap-3 small"><span><i class="bi bi-key text-primary me-1"></i>{{ r.permissions.count }} permission{{ r.permissions.count|pluralize }}</span><span><i class="bi bi-people text-primary me-1"></i>{{ r.user_set.count }} user{{ r.user_set.count|pluralize }}</span></div>
+      </div>
+      <div class="panel-footer d-flex gap-2">
+        <a href="{% url 'accounts:role_edit' r.pk %}" class="btn btn-light btn-sm"><i class="bi bi-sliders me-1"></i>Edit permissions</a>
+        <a href="{% url 'accounts:user_list' %}?type=staff&role={{ r.pk }}" class="btn btn-ghost btn-sm">Users</a>
+        {% if not r.profile.is_system %}<form method="post" action="{% url 'accounts:role_delete' r.pk %}" class="ms-auto" data-confirm="Delete this role?">{% csrf_token %}<button class="btn btn-ghost btn-sm text-danger"><i class="bi bi-trash"></i></button></form>{% endif %}
+      </div>
+    </div>
+  </div>
+{% endfor %}
+</div>
+{% endblock %}

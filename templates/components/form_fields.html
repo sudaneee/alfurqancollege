@@ -1,0 +1,23 @@
+{# Renders a Django form with consistent Bootstrap styling. Pass `form` and optional `cols` (default col-md-6). #}
+{% if form.non_field_errors %}<div class="alert alert-danger">{% for e in form.non_field_errors %}{{ e }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}
+{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+<div class="row g-3">
+{% for field in form.visible_fields %}
+  {% with wt=field.field.widget.input_type %}
+  <div class="{% if field.field.wide %}col-12{% else %}{{ cols|default:'col-md-6' }}{% endif %}">
+    {% if wt == 'checkbox' %}
+      <div class="form-check form-switch mt-md-4">
+        {{ field }}
+        <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {% if field.help_text %}<div class="form-text">{{ field.help_text|safe }}</div>{% endif %}
+      </div>
+    {% else %}
+      <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="req">*</span>{% endif %}</label>
+      {{ field }}
+      {% if field.help_text %}<div class="form-text">{{ field.help_text|safe }}</div>{% endif %}
+    {% endif %}
+    {% for e in field.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+  </div>
+  {% endwith %}
+{% endfor %}
+</div>
